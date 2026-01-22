@@ -9,4 +9,5 @@ public interface CustomerService {
 
     CustomerMaster findByMembershipId(String membershipId);
 
+    CustomerMaster saveOrUpdateCustomer(CustomerMaster customer);
 }

@@ -42,7 +42,8 @@ public class CustomerController {
         } catch (Exception e) {
             System.err.println("An error occurred while sending the email: " + e.getMessage());
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Customer added successfully", null));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse("Customer added successfully", true, null));
 
     }
 
@@ -62,6 +63,21 @@ public class CustomerController {
             return ResponseEntity.ok(customer);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @PostMapping("/customer/save-or-update")
+    public ResponseEntity<ApiResponse> saveOrUpdateCustomer(@RequestBody CustomerMaster customer) {
+        if (customer.getEmail() == null || customer.getEmail().isEmpty()) {
+            return ResponseEntity.badRequest().body(new ApiResponse("Email is required", false, null));
+        }
+
+        try {
+            CustomerMaster saved = customerService.saveOrUpdateCustomer(customer);
+            return ResponseEntity.ok(new ApiResponse("Customer information saved", true, saved));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse("Error saving customer: " + e.getMessage(), false, null));
         }
     }
 

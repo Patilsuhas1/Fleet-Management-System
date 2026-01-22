@@ -7,6 +7,7 @@ import com.example.demo.Service.BookingService;
 import com.example.demo.dto.BookingRequest;
 import com.example.demo.dto.BookingResponse;
 import com.example.demo.dto.ReturnRequest;
+import com.example.demo.dto.HandoverRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +20,12 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<BookingResponse> getBooking(@PathVariable Long bookingId) {
+        BookingResponse booking = bookingService.getBooking(bookingId);
+        return ResponseEntity.ok(booking);
+    }
+
     @PostMapping("/create")
     public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request) {
         BookingResponse booking = bookingService.createBooking(request);
@@ -28,6 +35,12 @@ public class BookingController {
     @PostMapping("/handover/{bookingId}")
     public ResponseEntity<BookingResponse> handoverCar(@PathVariable Long bookingId) {
         BookingResponse booking = bookingService.handoverCar(bookingId);
+        return ResponseEntity.ok(booking);
+    }
+
+    @PostMapping("/process-handover")
+    public ResponseEntity<BookingResponse> processHandover(@RequestBody HandoverRequest request) {
+        BookingResponse booking = bookingService.processHandover(request);
         return ResponseEntity.ok(booking);
     }
 

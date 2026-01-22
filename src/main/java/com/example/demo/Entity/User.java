@@ -60,8 +60,9 @@ public class User {
 	@Column(unique = true)
 	private String email;
 
+	@jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
 	@Column(name = "role")
-	private String role; // ENUM: CUSTOMER, STAFF, ADMIN
+	private Role role;
 
 	@ManyToOne
 	@jakarta.persistence.JoinColumn(name = "hub_id")

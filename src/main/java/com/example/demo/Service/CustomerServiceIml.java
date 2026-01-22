@@ -28,4 +28,18 @@ public class CustomerServiceIml implements CustomerService {
         return customerRepository.findByMembershipId(membershipId);
     }
 
+    @Override
+    public CustomerMaster saveOrUpdateCustomer(CustomerMaster customer) {
+        CustomerMaster existing = customerRepository.findByEmail(customer.getEmail());
+        if (existing != null) {
+            // Update existing customer details
+            customer.setCustId(existing.getCustId()); // Preserve ID
+            // Allow fields to be updated
+            return customerRepository.save(customer);
+        } else {
+            // Create new
+            return customerRepository.save(customer);
+        }
+    }
+
 }

@@ -5,6 +5,7 @@ import com.example.demo.Repository.*;
 import com.example.demo.dto.BookingRequest;
 import com.example.demo.dto.BookingResponse;
 import com.example.demo.dto.ReturnRequest;
+import com.example.demo.dto.HandoverRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
@@ -81,29 +82,71 @@ public class BookingService {
         }
 
         public BookingResponse handoverCar(Long bookingId) {
-                BookingHeaderTable booking = bookingRepository.findById(bookingId)
+                // Deprecated: delegated to new method with nulls
+                HandoverRequest req = new HandoverRequest();
+                req.setBookingId(bookingId);
+                return processHandover(req);
+        }
+
+        public BookingResponse processHandover(HandoverRequest request) {
+                BookingHeaderTable booking = bookingRepository.findById(request.getBookingId())
                                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
                 if (!"CONFIRMED".equalsIgnoreCase(booking.getBookingStatus())) {
                         throw new RuntimeException("Booking is not in CONFIRMED state");
                 }
 
+                // Handle Car Selection/Swap
+                if (request.getCarId() != null) {
+                        CarMaster currentCar = booking.getCar();
+                        // If switching car
+                        if (currentCar == null || currentCar.getCarId() != request.getCarId()) {
+                                CarMaster newCar = carRepository.findById(request.getCarId())
+                                                .orElseThrow(() -> new IllegalArgumentException("Invalid Car ID"));
+
+                                if (newCar.getIsAvailable() != CarMaster.AvailabilityStatus.Y) {
+                                        throw new RuntimeException("Selected car is not available");
+                                }
+
+                                // Release old car if exists
+                                if (currentCar != null) {
+                                        currentCar.setIsAvailable(CarMaster.AvailabilityStatus.Y);
+                                        carRepository.save(currentCar);
+                                }
+
+                                // Assign new car
+                                booking.setCar(newCar);
+                                booking.setBookcar(newCar.getCarName());
+                                // Update availability immediately to prevent race conditions (simple approach)
+                                newCar.setIsAvailable(CarMaster.AvailabilityStatus.N);
+                                carRepository.save(newCar);
+                        }
+                } else {
+                        // Mark existing car as unavailable if not already
+                        CarMaster car = booking.getCar();
+                        if (car != null) {
+                                car.setIsAvailable(CarMaster.AvailabilityStatus.N);
+                                carRepository.save(car);
+                        }
+                }
+
+                // Capture Handover Details
+                booking.setPickupTime(java.time.LocalDateTime.now());
+                if (request.getFuelStatus() != null)
+                        booking.setPickupFuelStatus(request.getFuelStatus());
+                if (request.getNotes() != null)
+                        booking.setPickupCondition(request.getNotes());
+
                 // Update Booking Status
                 booking.setBookingStatus("ACTIVE");
                 bookingRepository.save(booking);
 
-                // Update Car Availability
-                CarMaster car = booking.getCar();
-                car.setIsAvailable(CarMaster.AvailabilityStatus.N);
-                carRepository.save(car);
-
-                // Create Invoice Record (Start)
+                // Create Invoice Record
                 InvoiceHeaderTable invoice = new InvoiceHeaderTable();
                 invoice.setBooking(booking);
                 invoice.setCustomer(booking.getCustomer());
                 invoice.setCar(booking.getCar());
                 invoice.setHandoverDate(LocalDate.now());
-                // Initialize other fields if necessary
                 invoiceRepository.save(invoice);
 
                 return mapToResponse(booking);
@@ -119,6 +162,14 @@ public class BookingService {
 
                 // Update Booking Status
                 booking.setBookingStatus("COMPLETED");
+
+                // Capture Return Details
+                booking.setReturnTime(java.time.LocalDateTime.now());
+                if (request.getFuelStatus() != null)
+                        booking.setReturnFuelStatus(request.getFuelStatus());
+                if (request.getNotes() != null)
+                        booking.setReturnCondition(request.getNotes());
+
                 bookingRepository.save(booking);
 
                 // Update Car Availability
@@ -136,6 +187,12 @@ public class BookingService {
                         invoiceRepository.save(invoice);
                 }
 
+                return mapToResponse(booking);
+        }
+
+        public BookingResponse getBooking(Long bookingId) {
+                BookingHeaderTable booking = bookingRepository.findById(bookingId)
+                                .orElseThrow(() -> new RuntimeException("Booking not found"));
                 return mapToResponse(booking);
         }
 

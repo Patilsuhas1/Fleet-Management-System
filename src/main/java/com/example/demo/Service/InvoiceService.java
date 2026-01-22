@@ -21,6 +21,33 @@ public class InvoiceService {
     @Autowired
     private BookingRepository bookingRepository;
 
+    @Autowired
+    private org.springframework.mail.javamail.JavaMailSender mailSender;
+
+    public void sendInvoiceEmail(Long bookingId, String toEmail) {
+        try {
+            ByteArrayInputStream pdfStream = generateInvoicePDF(bookingId);
+
+            jakarta.mail.internet.MimeMessage message = mailSender.createMimeMessage();
+            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
+                    message, true);
+
+            helper.setTo(toEmail);
+            helper.setSubject("Your Invoice from IndiaDrive - Booking " + bookingId);
+            helper.setText("Dear Customer,\n\nPlease find attached your invoice for Booking ID: " + bookingId
+                    + ".\n\nThank you for choosing IndiaDrive.\n\nBest Regards,\nIndiaDrive Team");
+
+            org.springframework.core.io.InputStreamSource attachment = new org.springframework.core.io.InputStreamResource(
+                    pdfStream);
+            helper.addAttachment("Invoice_" + bookingId + ".pdf", attachment);
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("Error sending email: " + e.getMessage());
+            // Don't rethrow to avoid breaking the return flow, just log it
+        }
+    }
+
     public ByteArrayInputStream generateInvoicePDF(Long bookingId) {
         Document document = new Document();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -76,7 +103,7 @@ public class InvoiceService {
             document.add(new Paragraph("\n"));
 
             // Note: Total Amount calculation logic can be added here if available in entity
-            document.add(new Paragraph("TOTAL AMOUNT: $ (To be calculated)", boldFont));
+            document.add(new Paragraph("TOTAL AMOUNT: $ (Calculation logic pending)", boldFont));
 
             document.close();
 

@@ -12,7 +12,6 @@ com\example\demo\Repository\CheckCustomerExistsRepository.class
 com\example\demo\controller\StateController.class
 com\example\demo\controller\BookingController.class
 com\example\demo\Entity\CarTypeMaster.class
-com\example\demo\controller\CustomerController.class
 com\example\demo\Repository\projection\HubInfoProjection.class
 com\example\demo\controller\CustomerExistsController.class
 com\example\config\JwtFilter.class
@@ -26,7 +25,6 @@ com\example\demo\Entity\HubMaster.class
 com\example\demo\controller\HubController.class
 com\example\demo\Service\MyUserDetailsService.class
 com\example\demo\Repository\CustomerRepository.class
-com\example\demo\Entity\CustomerMaster.class
 com\example\demo\Service\CustomerServiceIml.class
 com\example\demo\Repository\GetCarDetailsFromBooking.class
 com\example\demo\Service\CityServiceImpl.class
@@ -57,4 +55,3 @@ com\example\demo\Service\UserServiceImpl.class
 com\example\demo\FleeManApplication.class
 com\example\demo\Repository\StateRepository.class
 com\example\demo\controller\CarController.class
-com\example\demo\dto\ApiResponse.class

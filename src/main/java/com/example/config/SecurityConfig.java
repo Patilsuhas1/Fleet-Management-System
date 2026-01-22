@@ -23,12 +23,10 @@ public class SecurityConfig {
 
 	@Autowired
 	private UserDetailsService userDetailsService;
-	
+
 	@Autowired
 	private JwtFilter jwtFilter;
-	
-	
-	
+
 	@Bean
 	public AuthenticationProvider authProvider() {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -37,31 +35,40 @@ public class SecurityConfig {
 		provider.setPasswordEncoder(new BCryptPasswordEncoder());
 		return provider;
 	}
-	
-	
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-		http.csrf(customizer -> customizer.disable()).authorizeHttpRequests(request -> request
-//		 			.requestMatchers("/home").permitAll()
-//		 			.requestMatchers("/login").permitAll()
-//		 			.requestMatchers("/api/user/regiter").permitAll()
-				//.anyRequest().authenticated())
-		 		.anyRequest().permitAll())
+		http.cors(Customizer.withDefaults()) // Enable CORS
+				.csrf(customizer -> customizer.disable())
+				.authorizeHttpRequests(request -> request
+						// .requestMatchers("/home").permitAll()
+						// .requestMatchers("/login").permitAll()
+						// .requestMatchers("/api/user/regiter").permitAll()
+						// .anyRequest().authenticated())
+						.anyRequest().permitAll())
 				.httpBasic(Customizer.withDefaults())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.addFilterBefore(jwtFilter , 	UsernamePasswordAuthenticationFilter.class);
+				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
-	
-	
+
 	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception
-	{
+	public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+		org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+		configuration.setAllowedOrigins(java.util.Arrays.asList("http://localhost:3000"));
+		configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
+		configuration.setAllowCredentials(true);
+		org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+		return source;
+	}
+
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 		return configuration.getAuthenticationManager();
 	}
-	
-	
+
 }

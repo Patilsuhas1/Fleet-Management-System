@@ -7,5 +7,6 @@ import java.time.LocalDate;
 public class ReturnRequest {
     private Long bookingId;
     private LocalDate returnDate;
-    // can add mileage, damage status etc later
+    private String fuelStatus;
+    private String notes;
 }

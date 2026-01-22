@@ -215,4 +215,22 @@ public class BookingHeaderTable {
 	@Column(name = "BookCar")
 	private String Bookcar;
 
+	@Column(name = "pickup_time")
+	private java.time.LocalDateTime pickupTime;
+
+	@Column(name = "pickup_fuel_status")
+	private String pickupFuelStatus;
+
+	@Column(name = "pickup_condition")
+	private String pickupCondition;
+
+	@Column(name = "return_time")
+	private java.time.LocalDateTime returnTime;
+
+	@Column(name = "return_fuel_status")
+	private String returnFuelStatus;
+
+	@Column(name = "return_condition")
+	private String returnCondition;
+
 }
