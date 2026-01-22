@@ -27,7 +27,6 @@ public class CarService {
 
             carList = carRepository.findCarDetailsByHubAddress(hub_address_and_details);
 
-
             if (carList == null || carList.isEmpty()) {
                 logger.warn("No cars found for hubAddress: {}", hub_address_and_details);
             } else {
@@ -36,11 +35,16 @@ public class CarService {
             }
         } catch (Exception e) {
 
-            logger.error("Error fetching car details for hubAddress: {}. Error: {}", hub_address_and_details, e.getMessage());
+            logger.error("Error fetching car details for hubAddress: {}. Error: {}", hub_address_and_details,
+                    e.getMessage());
 
             throw new RuntimeException("Failed to fetch car details from repository", e);
         }
         return carList;
     }
-}
 
+    public List<com.example.demo.Entity.CarMaster> getAvailableCars(int hubId, java.time.LocalDate startDate,
+            java.time.LocalDate endDate) {
+        return carRepository.findAvailableCars(hubId, startDate, endDate);
+    }
+}

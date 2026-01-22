@@ -9,60 +9,74 @@ import lombok.Data;
 @Data
 public class BookingHeaderTable {
 
-   @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "booking_id")
 	private long bookingId;
 
 	@Column(name = "booking_date")
-    private LocalDate bookingDate;
-	
+	private LocalDate bookingDate;
+
+	@Column(name = "confirmation_number", unique = true)
+	private String confirmationNumber;
+
+	@Column(name = "booking_status")
+	private String bookingStatus; // CONFIRMED, CANCELLED, ALLOTTED, COMPLETED
+
 	@ManyToOne
 	@JoinColumn(name = "cust_id", referencedColumnName = "cust_id", nullable = false)
-    private CustomerMaster customer;
+	private CustomerMaster customer;
 
 	@Column(name = "start_date")
-    private LocalDate startDate;
+	private LocalDate startDate;
 
-    @Column(name = "end_date")
+	@Column(name = "end_date")
 	private LocalDate endDate;
 
 	@ManyToOne
-    @JoinColumn(name = "cartype_id")
-    private CarTypeMaster carType;
+	@JoinColumn(name = "pickup_location_id") // Maps to hub_master
+	private HubMaster pickupHub; // Mapped from logic, usually implicit in car but needed for search
+
+	@ManyToOne
+	@JoinColumn(name = "return_hub_id")
+	private HubMaster returnHub;
+
+	@ManyToOne
+	@JoinColumn(name = "cartype_id")
+	private CarTypeMaster carType;
 
 	@ManyToOne
 	@JoinColumn(name = "car_id")
 	private CarMaster car;
 
-    @Column(name = "first_name")
-    private String firstName;
+	@Column(name = "first_name")
+	private String firstName;
 
-    @Column(name = "last_name")
-    private String lastName;
+	@Column(name = "last_name")
+	private String lastName;
 
-    @Column(name = "address")
-    private String address;
+	@Column(name = "address")
+	private String address;
 
-    @Column(name = "state")
-    private String state;
+	@Column(name = "state")
+	private String state;
 
-    @Column(name = "pin")
-    private String pin;
+	@Column(name = "pin")
+	private String pin;
 
-    @Column(name = "daily_rate")
-    private double dailyRate;
+	@Column(name = "daily_rate")
+	private double dailyRate;
 
-    @Column(name = "weekly_rate")
-    private double weeklyRate;
+	@Column(name = "weekly_rate")
+	private double weeklyRate;
 
-    @Column(name = "monthly_rate")
-    private double monthlyRate;
+	@Column(name = "monthly_rate")
+	private double monthlyRate;
 
-    @Column(name = "Email_ID")
-    private String emailId;
-    
-    public long getBookingId() {
+	@Column(name = "Email_ID")
+	private String emailId;
+
+	public long getBookingId() {
 		return bookingId;
 	}
 
@@ -199,7 +213,6 @@ public class BookingHeaderTable {
 	}
 
 	@Column(name = "BookCar")
-    private String Bookcar;
-
+	private String Bookcar;
 
 }

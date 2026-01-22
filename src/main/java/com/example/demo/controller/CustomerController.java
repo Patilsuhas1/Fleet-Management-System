@@ -30,22 +30,39 @@ public class CustomerController {
     public ResponseEntity<ApiResponse> addCustomer(@RequestBody CustomerMaster customer) {
         CustomerMaster customerMaster = customerService.AddCustomer(customer);
 
-         // Call Email microservice
+        // Call Email microservice
         String emailServiceUrl = "http://localhost:8081/sendEmail";
         Map<String, Object> emailMaster = new HashMap<>();
         emailMaster.put("name", customerMaster.getFirstName() + " " + customerMaster.getLastName());
         emailMaster.put("email", customerMaster.getEmail());
-       
-        
+
         try {
             restTemplate.postForObject(emailServiceUrl, emailMaster, String.class);
-           
+
         } catch (Exception e) {
             System.err.println("An error occurred while sending the email: " + e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Customer added successfully", null));
-        
 
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/find")
+    public ResponseEntity<CustomerMaster> findCustomer(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String email,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String membershipId) {
+
+        CustomerMaster customer = null;
+        if (email != null && !email.isEmpty()) {
+            customer = customerService.findByEmail(email);
+        } else if (membershipId != null && !membershipId.isEmpty()) {
+            customer = customerService.findByMembershipId(membershipId);
+        }
+
+        if (customer != null) {
+            return ResponseEntity.ok(customer);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
 }

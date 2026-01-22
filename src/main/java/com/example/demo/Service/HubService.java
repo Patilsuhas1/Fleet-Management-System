@@ -13,13 +13,17 @@ import java.util.List;
 public class HubService {
 
     @Autowired
-    private   HubRepository hubRepository;
+    private HubRepository hubRepository;
 
-    public List<HubInfoProjection> getAllHubByCityIdAndStateId(String cityName , String stateName ){
-//        log.info(" Into  [HubService]  [getAllHubByCityIdAndStateId] :{}  {} ",cityId ,stateId);
-        List<HubInfoProjection>  hubList = hubRepository.getHubListCityIdAndStateId(cityName,stateName);
+    public List<HubInfoProjection> getAllHubByCityIdAndStateId(String cityName, String stateName) {
+        // log.info(" Into [HubService] [getAllHubByCityIdAndStateId] :{} {} ",cityId
+        // ,stateId);
+        List<HubInfoProjection> hubList = hubRepository.getHubListCityIdAndStateId(cityName, stateName);
         return hubList;
     }
 
-}
+    public List<HubInfoProjection> searchHubs(String query) {
+        return hubRepository.searchHubs(query);
+    }
 
+}

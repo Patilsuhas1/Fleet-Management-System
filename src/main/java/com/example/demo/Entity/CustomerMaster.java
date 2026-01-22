@@ -15,54 +15,57 @@ import lombok.Data;
 @Data
 public class CustomerMaster {
 
-   @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "cust_id")
-    private int custId;
+	private int custId;
 
-    private String firstName;
+	@Column(name = "membership_id", unique = true)
+	private String membershipId;
 
-    private String lastName;
+	private String firstName;
 
-    private String addressLine1;
+	private String lastName;
 
-    private String addressLine2;
+	private String addressLine1;
 
-    @Column(unique = true)
-    private String email;
+	private String addressLine2;
 
-    private String city;
+	@Column(unique = true)
+	private String email;
 
-    private String pincode;
+	private String city;
 
-    private String phoneNumber;
+	private String pincode;
 
-    private String mobileNumber;
+	private String phoneNumber;
 
+	private String mobileNumber;
 
-    private String creditCardType;
+	private String creditCardType;
 
-    private String creditCardNumber;
+	private String creditCardNumber;
 
-    private String drivingLicenseNumber;
+	private String drivingLicenseNumber;
 
-    private String idpNumber; //International Driving Permit
+	private String idpNumber; // International Driving Permit
 
-    private String issuedByDL;
+	private String issuedByDL;
 
-    private LocalDate validThroughDL;
+	private LocalDate validThroughDL;
 
-    private String passportNumber;
+	private String passportNumber;
 
-    private LocalDate passportValidThrough;
+	private LocalDate passportValidThrough;
 
-    private String passportIssuedBy;
+	private String passportIssuedBy;
 
-    private LocalDate passportValidFrom;
+	private LocalDate passportValidFrom;
 
-    private LocalDate passportIssueDate;
+	private LocalDate passportIssueDate;
 
-    private LocalDate dateOfBirth;
+	private LocalDate dateOfBirth;
+
 	public int getCustId() {
 		return custId;
 	}

@@ -6,7 +6,10 @@ import com.example.demo.Entity.CustomerMaster;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface CustomerRepository  extends JpaRepository<CustomerMaster, Integer> {
+public interface CustomerRepository extends JpaRepository<CustomerMaster, Integer> {
 
+    CustomerMaster findByEmail(String email);
+
+    CustomerMaster findByMembershipId(String membershipId);
 
 }

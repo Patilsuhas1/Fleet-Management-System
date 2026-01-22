@@ -26,4 +26,17 @@ public class CarController {
         return new ResponseEntity<>(cars, HttpStatus.OK);
 
     }
+
+    @GetMapping("cars/available")
+    public ResponseEntity<List<com.example.demo.Entity.CarMaster>> getAvailableCars(
+            @RequestParam int hubId,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+
+        java.time.LocalDate start = java.time.LocalDate.parse(startDate);
+        java.time.LocalDate end = java.time.LocalDate.parse(endDate);
+
+        List<com.example.demo.Entity.CarMaster> cars = carService.getAvailableCars(hubId, start, end);
+        return new ResponseEntity<>(cars, HttpStatus.OK);
+    }
 }
