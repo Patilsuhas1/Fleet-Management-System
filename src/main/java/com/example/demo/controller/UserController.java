@@ -126,5 +126,29 @@ public class UserController {
 		}
 	}
 
-}
+	@PostMapping("/forgot-password")
+	public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+		String email = request.get("email");
+		String token = userService.generateResetToken(email);
+		if (token != null) {
+			// Mock sending email
+			logger.info("Password reset token for {}: {}", email, token);
+			return ResponseEntity.ok("If an account exists with this email, you will receive a reset link shortly.");
+		}
+		// Always return OK for security reasons even if email is not found
+		return ResponseEntity.ok("If an account exists with this email, you will receive a reset link shortly.");
+	}
 
+	@PostMapping("/reset-password")
+	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+		String token = request.get("token");
+		String newPassword = request.get("password");
+		boolean success = userService.resetPassword(token, newPassword);
+		if (success) {
+			return ResponseEntity.ok("Password has been reset successfully.");
+		} else {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired reset token.");
+		}
+	}
+
+}

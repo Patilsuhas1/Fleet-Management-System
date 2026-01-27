@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import ApiService from '../services/api';
+import AuthService from '../services/authService';
 
 const ManageBooking = () => {
     const location = useLocation();
@@ -12,7 +13,15 @@ const ManageBooking = () => {
     const [error, setError] = useState('');
     const [searchInput, setSearchInput] = useState('');
 
+    const navigate = useNavigate();
+
     useEffect(() => {
+        const user = AuthService.getCurrentUser();
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
         if (!bookingId) {
             setLoading(false);
             return;
@@ -41,7 +50,7 @@ const ManageBooking = () => {
         };
 
         fetchBooking();
-    }, [bookingId]);
+    }, [bookingId, navigate]);
 
     const handleSearch = (e) => {
         e.preventDefault();

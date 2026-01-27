@@ -11,6 +11,14 @@ const AuthService = {
         return response.data;
     },
 
+    googleLogin: async (token) => {
+        const response = await axios.post(API_URL + 'api/v1/auth/google', { token });
+        if (response.data.token) {
+            localStorage.setItem('user', JSON.stringify(response.data));
+        }
+        return response.data;
+    },
+
     register: async (userData) => {
         return axios.post(API_URL + 'register', userData);
     },
@@ -21,6 +29,14 @@ const AuthService = {
 
     getCurrentUser: () => {
         return JSON.parse(localStorage.getItem('user'));
+    },
+
+    forgotPassword: async (email) => {
+        return axios.post(API_URL + 'forgot-password', { email });
+    },
+
+    resetPassword: async (token, password) => {
+        return axios.post(API_URL + 'reset-password', { token, password });
     }
 };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import AuthService from '../services/authService';
 
 const Home = () => {
     const { t, i18n } = useTranslation();
@@ -21,21 +22,21 @@ const Home = () => {
                         aria-expanded="false"
                     >
                         <i className="bi bi-translate me-2"></i>
-                        {i18n.language?.startsWith('en') ? 'English' : i18n.language?.startsWith('hi') ? 'हिंदी' : i18n.language?.startsWith('fr') ? 'Français' : 'Language'}
+                        {i18n.language?.startsWith('en') ? 'English' : i18n.language?.startsWith('mr') ? 'मराठी' : i18n.language?.startsWith('fr') ? 'Français' : 'Language'}
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4">
                         <li>
-                            <button className={`dropdown-item py-2 ${i18n.language?.startsWith('en') ? 'active bg-primary' : ''}`} onClick={() => changeLanguage('en')}>
+                            <button className={`dropdown - item py - 2 ${i18n.language?.startsWith('en') ? 'active bg-primary' : ''} `} onClick={() => changeLanguage('en')}>
                                 English
                             </button>
                         </li>
                         <li>
-                            <button className={`dropdown-item py-2 ${i18n.language?.startsWith('hi') ? 'active bg-primary' : ''}`} onClick={() => changeLanguage('hi')}>
-                                हिंदी (Hindi)
+                            <button className={`dropdown - item py - 2 ${i18n.language?.startsWith('mr') ? 'active bg-primary' : ''} `} onClick={() => changeLanguage('mr')}>
+                                मराठी (Marathi)
                             </button>
                         </li>
                         <li>
-                            <button className={`dropdown-item py-2 ${i18n.language?.startsWith('fr') ? 'active bg-primary' : ''}`} onClick={() => changeLanguage('fr')}>
+                            <button className={`dropdown - item py - 2 ${i18n.language?.startsWith('fr') ? 'active bg-primary' : ''} `} onClick={() => changeLanguage('fr')}>
                                 Français (French)
                             </button>
                         </li>
@@ -56,12 +57,14 @@ const Home = () => {
                                 {t('home.heroSub')}
                             </p>
                             <div className="d-flex gap-4 mt-2">
-                                <Link to="/booking" className="btn btn-premium btn-lg">
+                                <Link to={AuthService.getCurrentUser() ? "/booking" : "/login"} className="btn btn-premium btn-lg">
                                     {t('home.bookNow')}
                                 </Link>
-                                <Link to="/manage-booking" className="btn btn-outline-premium btn-lg">
-                                    {t('home.manageBooking')}
-                                </Link>
+                                {AuthService.getCurrentUser() && (
+                                    <Link to="/manage-booking" className="btn btn-outline-premium btn-lg">
+                                        {t('home.manageBooking')}
+                                    </Link>
+                                )}
                             </div>
                         </div>
                         <div className="col-lg-5 d-none d-lg-block">
@@ -77,8 +80,8 @@ const Home = () => {
             {/* Features Section */}
             <section className="container py-5 my-5">
                 <div className="text-center mb-5">
-                    <h2 className="display-5 fw-bold mb-3">Why Choose <span className="text-primary">IndiaDrive?</span></h2>
-                    <p className="text-muted fs-5">Industry leading service standards across the nation.</p>
+                    <h2 className="display-5 fw-bold mb-3">{t('home.whyChoose').split(' ').slice(0, -1).join(' ')} <span className="text-primary">{t('home.whyChoose').split(' ').slice(-1)}</span></h2>
+                    <p className="text-muted fs-5">{t('home.whyChooseSub')}</p>
                 </div>
                 <div className="row g-4">
                     <div className="col-md-4">

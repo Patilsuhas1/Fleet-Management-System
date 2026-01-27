@@ -28,52 +28,47 @@ public class GoogleAuthService {
     @Autowired
     private JwtService jwtService;
 
-    public String verifyGoogleTokenAndGetJwt(String tokenHtml) throws GeneralSecurityException, IOException {
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                .setAudience(Collections.singletonList(clientId))
-                .build();
+    public String verifyGoogleTokenAndGetJwt(String accessToken) throws IOException {
+        // Use access token to fetch user info from Google
+        com.google.api.client.http.GenericUrl url = new com.google.api.client.http.GenericUrl(
+                "https://www.googleapis.com/oauth2/v3/userinfo");
+        com.google.api.client.http.HttpRequestFactory requestFactory = new NetHttpTransport().createRequestFactory();
+        com.google.api.client.http.HttpRequest request = requestFactory.buildGetRequest(url);
+        request.getHeaders().setAuthorization("Bearer " + accessToken);
 
-        GoogleIdToken idToken = verifier.verify(tokenHtml);
-        if (idToken != null) {
-            GoogleIdToken.Payload payload = idToken.getPayload();
+        com.google.api.client.http.HttpResponse response = request.execute();
+        java.io.InputStream content = response.getContent();
+        com.google.gson.JsonObject payload = com.google.gson.JsonParser
+                .parseReader(new java.io.InputStreamReader(content)).getAsJsonObject();
 
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            String givenName = (String) payload.get("given_name");
+        if (payload != null && payload.has("email")) {
+            String email = payload.get("email").getAsString();
+            String name = payload.has("name") ? payload.get("name").getAsString() : "";
 
-            // Generate a username from email if name is missing or for uniqueness
+            // Generate a username from email
             String username = email.split("@")[0];
 
             // Check if user exists
             User user = userRepository.findByUsername(username);
 
-            // If try by email (if your logic allows, but here we strictly follow User
-            // entity which uses username)
-            // Ideally we should check by email too if your User entity has email query
             if (user == null) {
-                // Try to find by email if possible or create new
-                // Since User has unique username, let's create one
                 user = new User();
                 user.setEmail(email);
                 user.setUsername(username);
                 user.setRole(Role.CUSTOMER);
-                // Set a random password as they use Google to login
                 user.setPassword(UUID.randomUUID().toString());
 
                 try {
                     userRepository.save(user);
                 } catch (Exception e) {
-                    // Fallback if username taken
                     user.setUsername(username + "_" + UUID.randomUUID().toString().substring(0, 4));
                     userRepository.save(user);
                 }
             }
 
-            // Generate our own JWT
             return jwtService.generateToken(user.getUsername(), user.getRole().name());
         } else {
-            throw new IllegalArgumentException("Invalid ID token.");
+            throw new IllegalArgumentException("Invalid access token.");
         }
     }
 }
-

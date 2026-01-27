@@ -32,6 +32,9 @@ const Navbar = ({ theme, toggleTheme }) => {
                         {role === 'CUSTOMER' && (
                             <>
                                 <li className="nav-item">
+                                    <Link className="nav-link px-3" to="/manage-booking">Manage Booking</Link>
+                                </li>
+                                <li className="nav-item">
                                     <Link className="nav-link px-3" to="/booking">Book a Car</Link>
                                 </li>
                                 <li className="nav-item">

@@ -8,5 +8,8 @@ public interface UserService {
 
 	User getUserByUsername(String Username);
 
-}
+	String generateResetToken(String email);
 
+	boolean resetPassword(String token, String newPassword);
+
+}

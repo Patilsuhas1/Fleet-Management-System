@@ -51,7 +51,7 @@ const ApiService = {
 
     // Customer
     findCustomer: (email) => instance.get(`/find?email=${encodeURIComponent(email)}`).then(res => res.data),
-    saveCustomer: (customer) => instance.post('/customer/save-or-update', customer).then(res => ({ success: true, data: res.data })),
+    saveCustomer: (customer) => instance.post('/customer/save-or-update', customer).then(res => res.data),
 
     // Vendors
     getAllVendors: () => instance.get('/api/v1/vendors').then(res => res.data),

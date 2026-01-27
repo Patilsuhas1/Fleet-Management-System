@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDateTime;
 import lombok.Data;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -67,5 +68,10 @@ public class User {
 	@ManyToOne
 	@jakarta.persistence.JoinColumn(name = "hub_id")
 	private HubMaster hub;
-}
 
+	@Column(name = "reset_token")
+	private String resetToken;
+
+	@Column(name = "reset_token_expiry")
+	private LocalDateTime resetTokenExpiry;
+}

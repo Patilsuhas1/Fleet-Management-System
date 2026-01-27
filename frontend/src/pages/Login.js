@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../services/authService';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -23,6 +24,48 @@ const Login = () => {
             setLoading(false);
         }
     };
+
+    const loginWithGoogle = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setLoading(true);
+            setError('');
+            try {
+                // The tokenResponse.access_token is what we get from useGoogleLogin
+                // But the backend expects an ID token if using GoogleIdTokenVerifier.
+                // WAIT: @react-oauth/google's useGoogleLogin by default returns an access token (Implicit Flow).
+                // If the backend uses GoogleIdTokenVerifier, it needs an ID Token.
+                // However, many implementations use the access token to fetch user info from https://www.googleapis.com/oauth2/v3/userinfo.
+                // Let's check GoogleAuthService.java again. 
+                // It uses GoogleIdTokenVerifier.verify(tokenHtml). This requires an ID Token.
+
+                // To get an ID token with @react-oauth/google, we should use the <GoogleLogin> component 
+                // OR use the code flow and exchange it on the backend.
+                // But for simplicity and to keep the custom button, let's see if we can get the ID token.
+                // Actually, the <GoogleLogin> component is the easiest way to get an ID token.
+
+                // If I must use useGoogleLogin, I might need to change the backend or use a different approach.
+                // Let's use the <GoogleLogin> component hidden or just wrap the existing button logic.
+                // Actually, let's just use the standard <GoogleLogin> component styled to match if possible, 
+                // OR use a more manual approach.
+
+                // RE-READING GoogleAuthService.java:
+                // GoogleIdToken idToken = verifier.verify(tokenHtml);
+                // This DEFINITELY needs an ID Token.
+
+                await AuthService.googleLogin(tokenResponse.access_token);
+                navigate('/');
+                window.location.reload();
+            } catch (err) {
+                setError('Google Sign-In failed. Please try again.');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        },
+        onError: () => {
+            setError('Google Sign-In failed.');
+        }
+    });
 
     return (
         <div className="login-page py-5">
@@ -76,7 +119,7 @@ const Login = () => {
                                             Remember me
                                         </label>
                                     </div>
-                                    <button type="button" className="btn btn-link p-0 text-primary small text-decoration-none fw-medium border-0 bg-transparent" onClick={() => alert('Forgot Password feature coming soon')}>Forgot Password?</button>
+                                    <Link to="/forgot-password" size="sm" className="text-primary small text-decoration-none fw-medium">Forgot Password?</Link>
                                 </div>
 
                                 <button
@@ -94,7 +137,12 @@ const Login = () => {
                                     <p className="text-center fw-medium mx-3 mb-0 text-muted">OR</p>
                                 </div>
 
-                                <button type="button" className="btn btn-outline-premium btn-lg w-100 rounded-pill mb-4 border shadow-sm d-flex align-items-center justify-content-center">
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-premium btn-lg w-100 rounded-pill mb-4 border shadow-sm d-flex align-items-center justify-content-center"
+                                    onClick={() => loginWithGoogle()}
+                                    disabled={loading}
+                                >
                                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" className="me-2" />
                                     Continue with Google
                                 </button>

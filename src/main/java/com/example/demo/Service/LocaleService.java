@@ -7,6 +7,7 @@ import java.util.*;
 public class LocaleService {
 
     public Map<String, Object> getTranslations(String lang) {
+        ResourceBundle.clearCache();
         Locale locale = new Locale(lang);
         ResourceBundle bundle;
         try {
