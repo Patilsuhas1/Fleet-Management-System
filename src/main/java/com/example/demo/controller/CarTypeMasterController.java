@@ -23,3 +23,4 @@ public class CarTypeMasterController {
         return carTypeMasterService.getAllCarTypes();
     }
 }
+

@@ -33,3 +33,4 @@ public interface HubRepository extends JpaRepository<HubMaster, Integer> {
             "WHERE h.hub_name LIKE %:query% OR c.city_name LIKE %:query% OR s.state_name LIKE %:query% OR a.airport_code LIKE %:query%", nativeQuery = true)
     List<HubInfoProjection> searchHubs(@Param("query") String query);
 }
+

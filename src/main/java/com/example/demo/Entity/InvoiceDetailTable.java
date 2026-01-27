@@ -34,3 +34,4 @@ public class InvoiceDetailTable {
     private double addonAmt;
 
 }
+

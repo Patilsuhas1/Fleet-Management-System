@@ -1,44 +1,26 @@
-import api from '../api/axiosConfig';
+import axios from 'axios';
+
+const API_URL = 'http://localhost:9001/';
 
 const AuthService = {
     login: async (username, password) => {
-        const response = await api.post('/login', { username, password });
+        const response = await axios.post(API_URL + 'login', { username, password });
         if (response.data.token) {
             localStorage.setItem('user', JSON.stringify(response.data));
-            localStorage.setItem('token', response.data.token);
         }
         return response.data;
     },
 
-    googleLogin: async (token) => {
-        const response = await api.post('/api/v1/auth/google', { token });
-        if (response.data.token) {
-            localStorage.setItem('user', JSON.stringify(response.data));
-            localStorage.setItem('token', response.data.token);
-        }
-        return response.data;
+    register: async (userData) => {
+        return axios.post(API_URL + 'register', userData);
     },
 
     logout: () => {
         localStorage.removeItem('user');
-        localStorage.removeItem('token');
     },
 
     getCurrentUser: () => {
         return JSON.parse(localStorage.getItem('user'));
-    },
-
-    isAuthenticated: () => {
-        return !!localStorage.getItem('token');
-    },
-
-    getHeader: () => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user && user.token) {
-            return { Authorization: 'Bearer ' + user.token };
-        } else {
-            return {};
-        }
     }
 };
 

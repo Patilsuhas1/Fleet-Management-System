@@ -51,3 +51,4 @@ public class AddOnDTO {
         this.rateValidUntil = rateValidUntil;
     }
 }
+

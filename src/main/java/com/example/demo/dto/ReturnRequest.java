@@ -10,3 +10,4 @@ public class ReturnRequest {
     private String fuelStatus;
     private String notes;
 }
+

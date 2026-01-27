@@ -1,103 +1,70 @@
-import axios from './axiosConfig';
+import axios from 'axios';
 
-const API_BASE = '/api/v1';
+const API_URL = 'http://localhost:9001';
+
+const instance = axios.create({
+    baseURL: API_URL,
+});
+
+// Add a request interceptor to append the token if present
+instance.interceptors.request.use(
+    config => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.token) {
+            config.headers['Authorization'] = 'Bearer ' + user.token;
+        }
+        return config;
+    },
+    error => Promise.reject(error)
+);
 
 const ApiService = {
-    // Location Services
-    getAllStates: async () => {
-        const response = await axios.get('/State');
-        return response.data;
-    },
+    // Hubs
+    getHubs: (stateName, cityName) => instance.get(`/api/v1/hub?stateName=${stateName}&cityName=${cityName}`).then(res => res.data),
+    searchLocations: (query) => instance.get(`/api/v1/locations/search?query=${query}`).then(res => res.data),
 
-    getCitiesByState: async (stateId) => {
-        const response = await axios.get(`/city/${stateId}`);
-        return response.data;
-    },
+    // States & Cities
+    getAllStates: () => instance.get('/State').then(res => res.data),
+    getCitiesByState: (stateId) => instance.get(`/city/${stateId}`).then(res => res.data),
 
-    getHubs: async (stateName, cityName) => {
-        const response = await axios.get(`${API_BASE}/hub`, {
-            params: { stateName, cityName }
-        });
-        return response.data;
-    },
-
-    searchLocations: async (query) => {
-        const response = await axios.get(`${API_BASE}/airport`, {
-            params: { airportCode: query }
-        });
-        return response.data;
-    },
-
-    // Car Services
-    getAvailableCars: async (hubId, startDate, endDate) => {
-        const response = await axios.get(`${API_BASE}/cars/available`, {
-            params: { hubId, startDate, endDate }
-        });
-        return response.data;
-    },
-
-    getAddOns: async () => {
-        const response = await axios.get(`${API_BASE}/addons`);
-        return response.data;
-    },
-
-    getCarTypes: async () => {
-        const response = await axios.get(`${API_BASE}/car-types`);
-        return response.data;
-    },
-
-    // Booking Services
-    createBooking: async (bookingRequest) => {
-        const response = await axios.post('/booking/create', bookingRequest);
-        return response.data;
-    },
-
-    handoverCar: async (bookingId) => {
-        const response = await axios.post(`/booking/handover/${bookingId}`);
-        return response.data;
-    },
-
-    getBooking: async (bookingId) => {
-        const response = await axios.get(`/booking/${bookingId}`);
-        return response.data;
-    },
-
-    processHandover: async (handoverRequest) => {
-        const response = await axios.post('/booking/process-handover', handoverRequest);
-        return response.data;
-    },
-
-    returnCar: async (returnRequest) => {
-        const response = await axios.post('/booking/return', returnRequest);
-        return response.data;
-    },
-
-    downloadInvoice: async (bookingId) => {
-        const response = await axios.get(`${API_BASE}/invoice/${bookingId}`, {
-            responseType: 'blob' // Important for handling PDF files
-        });
-        return response.data;
-    },
-
-    // Admin Services
-    uploadRates: async (file) => {
+    // Cars
+    getCarTypes: () => instance.get('/api/v1/car-types').then(res => res.data),
+    getAvailableCars: (hubId, startDate, endDate) => instance.get(`/api/v1/cars/available?hubId=${hubId}&startDate=${startDate}&endDate=${endDate}`).then(res => res.data),
+    uploadCars: (file) => {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await axios.post('/api/admin/upload-rates', formData, {
+        return instance.post('/api/v1/cars/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-        return response.data;
     },
 
-    // Customer Services
-    findCustomer: async (email) => {
-        const response = await axios.get(`/find?email=${email}`);
-        return response.data;
-    },
+    // Add-ons
+    getAddOns: () => instance.get('/api/v1/addons').then(res => res.data),
 
-    saveCustomer: async (customerData) => {
-        const response = await axios.post('/customer/save-or-update', customerData);
-        return response.data;
+    // Bookings
+    createBooking: (bookingRequest) => instance.post('/booking/create', bookingRequest).then(res => res.data),
+    getBooking: (id) => instance.get(`/booking/${id}`).then(res => res.data),
+    getBookingsByUser: (email) => instance.get(`/booking/user/${email}`).then(res => res.data),
+    processHandover: (request) => instance.post('/booking/process-handover', request).then(res => res.data),
+    returnCar: (request) => instance.post('/booking/return', request).then(res => res.data),
+    cancelBooking: (id) => instance.post(`/booking/cancel/${id}`).then(res => res.data),
+
+    // Customer
+    findCustomer: (email) => instance.get(`/find?email=${encodeURIComponent(email)}`).then(res => res.data),
+    saveCustomer: (customer) => instance.post('/customer/save-or-update', customer).then(res => ({ success: true, data: res.data })),
+
+    // Vendors
+    getAllVendors: () => instance.get('/api/v1/vendors').then(res => res.data),
+    addVendor: (vendor) => instance.post('/api/v1/vendors', vendor).then(res => res.data),
+    testVendorConnection: (id) => instance.post(`/api/v1/vendors/${id}/test-connection`).then(res => res.data),
+
+    // Admin Rates
+    uploadRates: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return instance.post('/api/v1/rates/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
     }
 };
 

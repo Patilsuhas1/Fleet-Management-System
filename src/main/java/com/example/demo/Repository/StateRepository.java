@@ -11,3 +11,4 @@ public interface StateRepository extends JpaRepository<StateMaster,Integer>
 {
 
 }
+

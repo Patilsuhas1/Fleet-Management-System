@@ -9,3 +9,4 @@ public class HandoverRequest {
     private String fuelStatus; // "1/4", "1/2", "3/4", "Full"
     private String notes;
 }
+

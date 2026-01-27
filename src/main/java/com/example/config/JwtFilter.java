@@ -2,7 +2,6 @@ package com.example.config;
 
 import java.io.IOException;
 
-
 import org.aspectj.lang.annotation.Aspect;
 import org.hibernate.annotations.Comment;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +22,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Component
-public class JwtFilter extends OncePerRequestFilter{
-	
+public class JwtFilter extends OncePerRequestFilter {
+
 	@Autowired
 	private JwtService jwtService;
-	
+
 	@Autowired
 	private ApplicationContext context;
 
@@ -35,34 +34,37 @@ public class JwtFilter extends OncePerRequestFilter{
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		
-		
+
 		String authHeader = request.getHeader("Authorization");
 		String token = null;
 		String userName = null;
-		
-		if(authHeader != null && authHeader.startsWith("Bearer "))
-		{
+
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
 			token = authHeader.substring(7);
 			userName = jwtService.extractUserName(token);
 		}
-		
-		if(userName !=null && SecurityContextHolder.getContext().getAuthentication()==null)
-		{
-			UserDetails userDetails = context.getBean(MyUserDetailsService.class).loadUserByUsername(userName);
-			
-			if(jwtService.validateToken(token,userDetails))
-			{
-				UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken( userDetails,null,userDetails.getAuthorities());
-				
-				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				
-				SecurityContextHolder.getContext().setAuthentication(authToken);
+
+		if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+			try {
+				UserDetails userDetails = context.getBean(MyUserDetailsService.class).loadUserByUsername(userName);
+
+				if (jwtService.validateToken(token, userDetails)) {
+					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails,
+							null, userDetails.getAuthorities());
+
+					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+					SecurityContextHolder.getContext().setAuthentication(authToken);
+				}
+			} catch (Exception e) {
+				// Log the exception but do not throw it to prevent recursion
+				System.out.println("Authentication failed for user: " + userName + " - " + e.getMessage());
 			}
 		}
-		
+
 		filterChain.doFilter(request, response);
-		
+
 	}
 
 }
+

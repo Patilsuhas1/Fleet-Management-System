@@ -68,3 +68,4 @@ public class User {
 	@jakarta.persistence.JoinColumn(name = "hub_id")
 	private HubMaster hub;
 }
+

@@ -9,3 +9,4 @@ public interface InvoiceRepository extends JpaRepository<InvoiceHeaderTable, Lon
     // You can add custom query methods here if needed, e.g., finding by booking ID
     InvoiceHeaderTable findByBooking_BookingId(Long bookingId);
 }
+

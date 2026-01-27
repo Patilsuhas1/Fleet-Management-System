@@ -51,3 +51,4 @@ public class ReturnCar_Type_MasterDTO {
         this.monthly_rate = monthly_rate;
     }
 }
+

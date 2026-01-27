@@ -13,3 +13,4 @@ public interface CustomerRepository extends JpaRepository<CustomerMaster, Intege
     CustomerMaster findByMembershipId(String membershipId);
 
 }
+

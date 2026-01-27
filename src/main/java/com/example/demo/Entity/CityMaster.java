@@ -53,3 +53,4 @@ public class CityMaster {
     @JoinColumn(name = "state_id")
     private StateMaster state;
 }
+

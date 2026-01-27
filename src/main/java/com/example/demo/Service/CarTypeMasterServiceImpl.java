@@ -19,3 +19,4 @@ public class CarTypeMasterServiceImpl
         return carTypeMasterRepository.findAll();
     }
 }
+

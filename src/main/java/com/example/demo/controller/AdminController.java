@@ -7,6 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;
+import java.util.List;
+import com.example.demo.Service.BookingService;
+import com.example.demo.dto.BookingResponse;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -33,4 +36,13 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(Map.of("message", message));
         }
     }
+
+    @Autowired
+    private BookingService bookingService;
+
+    @GetMapping("/bookings")
+    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+        return ResponseEntity.ok(bookingService.getAllBookings());
+    }
 }
+

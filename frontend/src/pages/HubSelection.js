@@ -1,126 +1,117 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ApiService from '../services/api';
 
 const HubSelection = () => {
-    const navigate = useNavigate();
     const location = useLocation();
-    const { state } = location;
-
-    // State from previous step
-    // state: { pickupDateTime, returnDateTime, differentReturn, locationData, searchType }
-
+    const navigate = useNavigate();
     const [hubs, setHubs] = useState([]);
-    const [selectedHub, setSelectedHub] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const { pickupDateTime, returnDateTime, locationData, searchType } = location.state || {};
+
     useEffect(() => {
-        if (!state || !state.locationData) {
-            setError("No location data provided. Please start from the booking page.");
-            setLoading(false);
+        if (!location.state) {
+            navigate('/booking');
             return;
         }
 
-        // CASE 1: Airport flow (already have hubs in locationData)
-        if (Array.isArray(state.locationData)) {
-            setHubs(state.locationData);
-            setLoading(false);
-            return;
-        }
+        const fetchHubs = async () => {
+            try {
+                let data = [];
+                if (searchType === 'airport') {
+                    // locationData is already the hub list for airports in current Booking.js logic
+                    data = locationData;
+                } else if (searchType === 'city') {
+                    data = await ApiService.getHubs(locationData.stateName, locationData.cityName);
+                }
+                setHubs(data);
+            } catch (err) {
+                setError('Failed to load hubs. Please try again.');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        // CASE 2: State + City flow (need to fetch)
-        if (state.locationData.stateName && state.locationData.cityName) {
-            const { stateName, cityName } = state.locationData;
-            fetchHubs(stateName, cityName);
-        } else {
-            setLoading(false);
-            setError("Invalid location criteria.");
-        }
-    }, [state]);
+        fetchHubs();
+    }, [location.state, navigate, searchType, locationData]);
 
-    const fetchHubs = async (stateName, cityName) => {
-        try {
-            const data = await ApiService.getHubs(stateName, cityName);
-            setHubs(data);
-        } catch (err) {
-            console.error("Hub fetch error:", err);
-            setError("Failed to fetch hubs for the selected city.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleContinue = () => {
-        if (!selectedHub) {
-            alert("Please select a pick-up location");
-            return;
-        }
-
-        navigate("/select-car", {
+    const handleHubSelect = (hub) => {
+        navigate('/select-car', {
             state: {
-                pickupDateTime: state.pickupDateTime,
-                returnDateTime: state.returnDateTime,
-                differentReturn: state.differentReturn,
-                hub: selectedHub
+                pickupHub: hub,
+                pickupDateTime,
+                returnDateTime
             }
         });
     };
 
-    if (error) {
-        return (
-            <div className="container py-5 text-center">
-                <div className="alert alert-danger">{error}</div>
-                <button className="btn btn-secondary" onClick={() => navigate('/booking')}>Back to Search</button>
+    if (loading) return (
+        <div className="container py-5 text-center">
+            <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading Hubs...</span>
             </div>
-        );
-    }
+        </div>
+    );
 
     return (
-        <div className="container py-5">
-            <h2 className="mb-4 text-center fw-bold">Select Pick-Up Location</h2>
+        <div className="hub-selection-page py-5">
+            <div className="container py-5">
+                <div className="text-center mb-5">
+                    <h2 className="display-5 fw-bold text-gradient mb-3">Select a Pick-up Hub</h2>
+                    <p className="text-muted fs-5">Choose the most convenient location to start your journey.</p>
+                </div>
 
-            <div className="card glass-card p-4 mx-auto" style={{ maxWidth: '800px' }}>
-                {loading && <div className="text-center"><span className="spinner-border text-primary"></span> Loading locations...</div>}
-
-                {!loading && hubs.length === 0 && (
-                    <div className="text-center">
-                        <p className="lead">No hubs found for your search.</p>
-                        <button className="btn btn-secondary" onClick={() => navigate('/booking')}>Try Different Location</button>
+                {error && (
+                    <div className="alert alert-danger rounded-4 border-0 shadow-sm mb-5 text-center">
+                        <i className="bi bi-exclamation-circle me-2"></i>{error}
                     </div>
                 )}
 
-                {!loading && hubs.length > 0 && (
-                    <div className="list-group mb-4">
-                        {hubs.map(hub => (
-                            <label key={hub.hubId} className={`list-group-item list-group-item-action d-flex gap-3 align-items-center ${selectedHub?.hubId === hub.hubId ? 'active' : ''}`} style={{ cursor: 'pointer' }}>
-                                <input
-                                    className="form-check-input flex-shrink-0"
-                                    type="radio"
-                                    name="hub"
-                                    checked={selectedHub?.hubId === hub.hubId}
-                                    onChange={() => setSelectedHub(hub)}
-                                />
-                                <div className="d-flex w-100 justify-content-between">
-                                    <div>
-                                        <h5 className="mb-1 fw-bold">{hub.hubName}</h5>
-                                        <p className="mb-1 opacity-75">{hub.hubAddress}</p>
-                                        <small>{hub.cityName}, {hub.stateName}</small>
-                                    </div>
-                                    <div className="text-end">
-                                        <div className="badge bg-light text-dark mb-2">
-                                            <i className="bi bi-telephone-fill"></i> {hub.contactNumber}
+                <div className="row g-4 justify-content-center">
+                    {hubs.length > 0 ? (
+                        hubs.map(hub => (
+                            <div className="col-lg-4 col-md-6" key={hub.hubId}>
+                                <div className="premium-card h-100 p-0 overflow-hidden shadow-premium border-0">
+                                    <div className="p-4">
+                                        <div className="d-flex align-items-start mb-3">
+                                            <div className="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                                                <i className="bi bi-geo-alt fs-4 text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <h4 className="fw-bold mb-1">{hub.hubName}</h4>
+                                                <p className="text-muted small mb-0">{hub.hubAddress}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-top border-light pt-3 mt-3">
+                                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                                <span className="text-muted small"><i className="bi bi-clock me-1"></i> Available 24/7</span>
+                                                <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Open</span>
+                                            </div>
+                                            <button
+                                                className="btn btn-premium w-100 rounded-pill shadow-glow"
+                                                onClick={() => handleHubSelect(hub)}
+                                            >
+                                                Select Hub
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            </label>
-                        ))}
-                    </div>
-                )}
-
-                <div className="d-flex justify-content-between mt-3">
-                    <button className="btn btn-secondary" onClick={() => navigate('/booking')}>Back</button>
-                    <button className="btn btn-primary px-5" onClick={handleContinue} disabled={!selectedHub}>Continue</button>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-12 text-center py-5">
+                            <div className="bg-light p-5 rounded-5 border-0 shadow-sm d-inline-block">
+                                <i className="bi bi-search display-3 text-muted mb-4 d-block"></i>
+                                <h3 className="fw-bold mb-3">No Hubs Found</h3>
+                                <p className="text-muted mb-4">We couldn't find any locations matching your search criteria.</p>
+                                <button className="btn btn-outline-primary rounded-pill px-5" onClick={() => navigate('/booking')}>Go Back</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

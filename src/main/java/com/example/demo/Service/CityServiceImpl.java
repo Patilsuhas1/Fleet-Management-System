@@ -22,3 +22,4 @@ public class CityServiceImpl implements CityService {
 		 return cityRepository.findByState_StateId(stateId);
 	}
 }
+

@@ -35,3 +35,4 @@ public interface CarRepository extends JpaRepository<CarMaster, Integer> {
                         @Param("endDate") java.time.LocalDate endDate);
 
 }
+

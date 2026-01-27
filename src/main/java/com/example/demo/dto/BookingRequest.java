@@ -15,3 +15,4 @@ public class BookingRequest {
     private List<Integer> addOnIds;
     private String email;
 }
+

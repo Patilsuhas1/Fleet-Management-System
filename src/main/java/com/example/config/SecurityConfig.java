@@ -27,12 +27,15 @@ public class SecurityConfig {
 	@Autowired
 	private JwtFilter jwtFilter;
 
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+
 	@Bean
 	public AuthenticationProvider authProvider() {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 
 		provider.setUserDetailsService(userDetailsService);
-		provider.setPasswordEncoder(new BCryptPasswordEncoder());
+		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}
 
@@ -47,7 +50,7 @@ public class SecurityConfig {
 						// .requestMatchers("/api/user/regiter").permitAll()
 						// .requestMatchers("/api/user/regiter").permitAll()
 						// .anyRequest().authenticated())
-						.requestMatchers("/api/v1/auth/google").permitAll()
+						.requestMatchers("/api/v1/auth/google", "/actuator/**").permitAll()
 						.anyRequest().permitAll())
 				.httpBasic(Customizer.withDefaults())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -74,3 +77,4 @@ public class SecurityConfig {
 	}
 
 }
+

@@ -115,3 +115,4 @@ public class BookingDTO {
         this.state = state;
     }
 }
+

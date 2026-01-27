@@ -65,13 +65,13 @@ public class BookingHeaderTable {
 	private String pin;
 
 	@Column(name = "daily_rate")
-	private double dailyRate;
+	private Double dailyRate;
 
 	@Column(name = "weekly_rate")
-	private double weeklyRate;
+	private Double weeklyRate;
 
 	@Column(name = "monthly_rate")
-	private double monthlyRate;
+	private Double monthlyRate;
 
 	@Column(name = "Email_ID")
 	private String emailId;
@@ -172,27 +172,27 @@ public class BookingHeaderTable {
 		this.pin = pin;
 	}
 
-	public double getDailyRate() {
+	public Double getDailyRate() {
 		return dailyRate;
 	}
 
-	public void setDailyRate(double dailyRate) {
+	public void setDailyRate(Double dailyRate) {
 		this.dailyRate = dailyRate;
 	}
 
-	public double getWeeklyRate() {
+	public Double getWeeklyRate() {
 		return weeklyRate;
 	}
 
-	public void setWeeklyRate(double weeklyRate) {
+	public void setWeeklyRate(Double weeklyRate) {
 		this.weeklyRate = weeklyRate;
 	}
 
-	public double getMonthlyRate() {
+	public Double getMonthlyRate() {
 		return monthlyRate;
 	}
 
-	public void setMonthlyRate(double monthlyRate) {
+	public void setMonthlyRate(Double monthlyRate) {
 		this.monthlyRate = monthlyRate;
 	}
 
@@ -234,3 +234,4 @@ public class BookingHeaderTable {
 	private String returnCondition;
 
 }
+

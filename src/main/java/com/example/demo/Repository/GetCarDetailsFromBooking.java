@@ -28,3 +28,4 @@ public interface GetCarDetailsFromBooking extends JpaRepository<CarMaster,Intege
 
    public List<ReturnCarMasterDetailsFromBooking> GetDetailsOfCarFromBooking( @Param("Bookcar") String Bookcar);
 }
+

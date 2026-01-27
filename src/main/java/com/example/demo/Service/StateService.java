@@ -7,3 +7,4 @@ import com.example.demo.Entity.StateMaster;
 public interface StateService {
 	List<StateMaster> getAllStateMaster();
 }
+

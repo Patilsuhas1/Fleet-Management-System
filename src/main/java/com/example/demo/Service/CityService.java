@@ -8,3 +8,4 @@ public interface CityService {
 	
 	public List<CityMaster> getCitiesByState(int stateId);
 }
+

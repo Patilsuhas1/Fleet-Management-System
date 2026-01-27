@@ -1,172 +1,165 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ApiService from '../services/api';
 
 const CarSelection = () => {
-    const navigate = useNavigate();
     const location = useLocation();
-    const { state } = location;
-
-    // state: { pickupDateTime, returnDateTime, differentReturn, hub }
-
+    const navigate = useNavigate();
     const [cars, setCars] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [selectedCarTypeFilter, setSelectedCarTypeFilter] = useState('');
-    const [carTypes, setCarTypes] = useState([]);
+    const [filter, setFilter] = useState('All');
+
+    const { pickupHub, pickupDateTime, returnDateTime } = location.state || {};
 
     useEffect(() => {
-        if (!state || !state.hub) {
-            setError("Missing booking details. Please start over.");
-            setLoading(false);
+        if (!location.state || !pickupHub) {
+            navigate('/booking');
             return;
         }
 
-        loadData();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state]);
+        const fetchCars = async () => {
+            try {
+                const data = await ApiService.getAvailableCars(pickupHub.hubId, pickupDateTime, returnDateTime);
+                setCars(data);
+            } catch (err) {
+                setError('Failed to load available cars. Please try again.');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const loadData = async () => {
-        try {
-            // Load available cars
-            const carsData = await ApiService.getAvailableCars(
-                state.hub.hubId,
-                state.pickupDateTime, // API might expect date-only or datetime. 
-                // Booking.js Step 1 used <input type="date"> so it's YYYY-MM-DD
-                state.returnDateTime
-            );
+        fetchCars();
+    }, [location.state, navigate, pickupHub, pickupDateTime, returnDateTime]);
 
-            // Load car types for filtering (optional but nice)
-            const typesData = await ApiService.getCarTypes();
-
-            setCars(carsData || []);
-            setCarTypes(typesData || []);
-        } catch (err) {
-            console.error("Failed to load cars", err);
-            setError("Failed to load available cars.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSelectCar = (car) => {
+    const handleCarSelect = (car) => {
         navigate('/booking', {
             state: {
                 selectedCar: car,
-                pickupHub: state.hub,
-                returnHub: state.differentReturn ? null : state.hub, // If different return, Booking.js needs to ask? 
-                // Wait, requirement: "Return Location (DO NOT TOUCH LOGIC) UI is visible on this page" (Booking.js Step 1/New Step 1)
-                // In my refactored Booking.js Step 1, I had the checkbox.
-                // If checked, we need to handle it.
-                // The new flow jumps back to Booking.js Step 3 (Addons).
-                // Where is Return Hub selected?
-                // If "Different Location" was checked in Step 1, then user hasn't selected a return hub yet!
-                // So we might need to prompt for Return Hub??
-                // OR, Booking.js Step 3 is just addons. 
-                // Maybe we go back to a step that allows Return Hub selection if missing?
-                // Let's assume for now we pass the flag. Booking.js logic should handle it (maybe showing Step 1 again with Return Hub active? or a new Step?)
-                // The user said "Return Selection logic must remain exactly as implemented".
-                // Existing Booking.js had everything on one page. 
-                // I will pass 'differentReturnChecked': state.differentReturn
-
-                differentReturnChecked: state.differentReturn,
-                startDate: state.pickupDateTime,
-                endDate: state.returnDateTime
+                pickupHub,
+                startDate: pickupDateTime,
+                endDate: returnDateTime
             }
         });
     };
 
-    const filteredCars = selectedCarTypeFilter
-        ? cars.filter(c => c.carType?.carTypeId === Number(selectedCarTypeFilter))
-        : cars;
+    const filteredCars = filter === 'All'
+        ? cars
+        : cars.filter(car => car.carType?.carTypeName === filter);
 
-    if (error) {
-        return (
-            <div className="container py-5 text-center">
-                <div className="alert alert-danger">{error}</div>
-                <button className="btn btn-secondary" onClick={() => navigate('/')}>Home</button>
+    const carTypes = ['All', ...new Set(cars.map(car => car.carType?.carTypeName).filter(Boolean))];
+
+    if (loading) return (
+        <div className="container py-5 text-center">
+            <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Searching for available cars...</span>
             </div>
-        );
-    }
+        </div>
+    );
 
     return (
-        <div className="container py-5">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="fw-bold m-0">Select Your Vehicle</h2>
-                <div className="d-flex gap-2">
-                    <select
-                        className="form-select w-auto"
-                        value={selectedCarTypeFilter}
-                        onChange={e => setSelectedCarTypeFilter(e.target.value)}
-                    >
-                        <option value="">All Types</option>
-                        {carTypes.map(t => <option key={t.carTypeId} value={t.carTypeId}>{t.carTypeName}</option>)}
-                    </select>
-                </div>
-            </div>
-
-            {loading && <div className="text-center py-5"><span className="spinner-border text-primary"></span> Loading cars...</div>}
-
-            {!loading && filteredCars.length === 0 && (
-                <div className="text-center py-5">
-                    <h4>No cars available.</h4>
-                    <p className="text-muted">Try changing your dates or location.</p>
-                    <button className="btn btn-secondary" onClick={() => navigate('/select-hub', { state: location.state })}>Back via Browser</button>
-                </div>
-            )}
-
-            <div className="row g-4">
-                {filteredCars.map(car => (
-                    <div className="col-md-4" key={car.carId}>
-                        <div className="card h-100 shadow-sm border-0 hover-effect">
-                            <img
-                                src={car.imagePath || car.carType?.imagePath || 'https://via.placeholder.com/400x200?text=Car'}
-                                className="card-img-top"
-                                alt={car.carModel}
-                                style={{ height: '200px', objectFit: 'cover' }}
-                            />
-                            <div className="card-body">
-                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 className="card-title fw-bold mb-0">{car.carModel}</h5>
-                                    <span className="badge bg-primary">{car.carType?.carTypeName}</span>
-                                </div>
-                                <p className="text-muted small mb-3">{car.carNumber} • {car.color}</p>
-
-                                <div className="row g-2 mb-3 text-center">
-                                    <div className="col-4">
-                                        <div className="border rounded p-1">
-                                            <small className="d-block text-muted">Daily</small>
-                                            <span className="fw-bold">${car.carType?.dailyRate}</span>
-                                        </div>
-                                    </div>
-                                    <div className="col-4">
-                                        <div className="border rounded p-1">
-                                            <small className="d-block text-muted">Weekly</small>
-                                            <span className="fw-bold">${car.carType?.weeklyRate}</span>
-                                        </div>
-                                    </div>
-                                    <div className="col-4">
-                                        <div className="border rounded p-1">
-                                            <small className="d-block text-muted">Monthly</small>
-                                            <span className="fw-bold">${car.carType?.monthlyRate}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button
-                                    className="btn btn-success w-100 fw-bold"
-                                    onClick={() => handleSelectCar(car)}
-                                >
-                                    Book This Car
-                                </button>
-                            </div>
-                        </div>
+        <div className="car-selection-page py-5">
+            <div className="container py-5">
+                <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-4">
+                    <div className="text-start">
+                        <h2 className="display-5 fw-bold text-gradient mb-2">Available Vehicles</h2>
+                        <p className="text-muted mb-0">Showing cars for <span className="fw-bold text-primary">{pickupHub?.hubName}</span></p>
                     </div>
-                ))}
-            </div>
 
-            <div className="mt-4">
-                <button className="btn btn-secondary" onClick={() => navigate(-1)}>Back</button>
+                    <div className="d-flex gap-2 p-2 bg-glass rounded-pill">
+                        {carTypes.map(type => (
+                            <button
+                                key={type}
+                                className={`btn btn-sm rounded-pill px-4 ${filter === type ? 'btn-premium' : 'btn-link text-decoration-none text-muted'}`}
+                                onClick={() => setFilter(type)}
+                            >
+                                {type}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="alert alert-danger rounded-4 border-0 shadow-sm mb-5 text-center">
+                        <i className="bi bi-exclamation-circle me-2"></i>{error}
+                    </div>
+                )}
+
+                <div className="row g-4">
+                    {filteredCars.length > 0 ? (
+                        filteredCars.map(car => (
+                            <div className="col-lg-4 col-md-6" key={car.carId}>
+                                <div className="premium-card h-100 p-0 overflow-hidden shadow-premium border-0">
+                                    <div className="position-relative">
+                                        <img
+                                            src={car.imagePath || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=500&q=60'}
+                                            alt={car.carModel}
+                                            className="w-100 h-100 object-fit-cover"
+                                            style={{ height: '220px' }}
+                                        />
+                                        <div className="position-absolute top-0 end-0 m-3">
+                                            <span className="badge bg-primary rounded-pill px-3 py-2 shadow-sm">₹{car.carType?.dailyRate}/day</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4">
+                                        <div className="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h4 className="fw-bold mb-1">{car.carModel}</h4>
+                                                <p className="text-muted small mb-0">{car.carType?.carTypeName || 'Premium Sedan'}</p>
+                                            </div>
+                                            <div className="text-warning">
+                                                <i className="bi bi-star-fill"></i>
+                                                <i className="bi bi-star-fill"></i>
+                                                <i className="bi bi-star-fill"></i>
+                                                <i className="bi bi-star-fill"></i>
+                                                <i className="bi bi-star-half"></i>
+                                            </div>
+                                        </div>
+
+                                        <div className="row g-2 mb-4">
+                                            <div className="col-6">
+                                                <div className="bg-light p-2 rounded-3 text-center small text-muted">
+                                                    <i className="bi bi-people me-1"></i> 5 Seats
+                                                </div>
+                                            </div>
+                                            <div className="col-6">
+                                                <div className="bg-light p-2 rounded-3 text-center small text-muted">
+                                                    <i className="bi bi-gear me-1"></i> Automatic
+                                                </div>
+                                            </div>
+                                            <div className="col-6">
+                                                <div className="bg-light p-2 rounded-3 text-center small text-muted">
+                                                    <i className="bi bi-fuel-pump me-1"></i> Petrol
+                                                </div>
+                                            </div>
+                                            <div className="col-6">
+                                                <div className="bg-light p-2 rounded-3 text-center small text-muted">
+                                                    <i className="bi bi-briefcase me-1"></i> 2 Large
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            className="btn btn-premium w-100 rounded-pill shadow-glow"
+                                            onClick={() => handleCarSelect(car)}
+                                        >
+                                            Book This Vehicle
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-12 text-center py-5">
+                            <i className="bi bi-car-front display-1 text-muted opacity-25 mb-4"></i>
+                            <h3 className="fw-bold">No Vehicles Available</h3>
+                            <p className="text-muted">There are no vehicles matching your criteria at this location for these dates.</p>
+                            <button className="btn btn-outline-primary rounded-pill px-5 mt-3" onClick={() => navigate('/booking')}>Modify Search</button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

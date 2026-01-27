@@ -25,3 +25,4 @@ public interface ReturnCarMasterDetailsFromBooking {
 
     double getMonthly_rate();
 }
+

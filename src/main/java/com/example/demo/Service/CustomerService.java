@@ -11,3 +11,4 @@ public interface CustomerService {
 
     CustomerMaster saveOrUpdateCustomer(CustomerMaster customer);
 }
+

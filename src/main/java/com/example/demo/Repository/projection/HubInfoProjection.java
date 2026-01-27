@@ -9,3 +9,4 @@ public interface HubInfoProjection {
     String getCityName();
     String getStateName();
 }
+

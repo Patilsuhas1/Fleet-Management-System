@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -185,8 +187,25 @@ public class BookingService {
                 if (invoice != null) {
                         invoice.setReturnDate(
                                         request.getReturnDate() != null ? request.getReturnDate() : LocalDate.now());
-                        // Calculate Rates (Simple logic for demo)
-                        // invoice.setTotalAmt(...);
+
+                        // Calculate Rates
+                        long days = 1;
+                        if (booking.getStartDate() != null && invoice.getReturnDate() != null) {
+                                days = java.time.temporal.ChronoUnit.DAYS.between(booking.getStartDate(),
+                                                invoice.getReturnDate());
+                                if (days <= 0)
+                                        days = 1;
+                        }
+
+                        double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
+                        double rentalAmt = days * dailyRate;
+                        double addonAmt = 500.0; // Standard addon placeholder
+
+                        invoice.setRentalAmt(rentalAmt);
+                        invoice.setTotalAddonAmt(addonAmt);
+                        invoice.setTotalAmt(rentalAmt + addonAmt);
+                        invoice.setRate("Daily: " + dailyRate);
+
                         invoiceRepository.save(invoice);
                 }
 
@@ -218,6 +237,9 @@ public class BookingService {
 
                 if (booking.getCar() != null) {
                         response.setNumberPlate(booking.getCar().getNumberPlate());
+                        if (booking.getCar().getCarType() != null) {
+                                // Optionally set car type name if needed in response
+                        }
                 }
 
                 if (booking.getPickupHub() != null) {
@@ -230,8 +252,99 @@ public class BookingService {
 
                 response.setStartDate(booking.getStartDate());
                 response.setEndDate(booking.getEndDate());
+                // Handle potential nulls for rates (if they are Double objects in DB but
+                // primitives in Entity or vice versa)
+                // Assuming primitives in entity, so no null check needed, but good to be safe
+                // if changed later
                 response.setDailyRate(booking.getDailyRate());
 
                 return response;
         }
+
+        // Deprecated or removed as per user request to use ID only
+        // Keeping it for backward compatibility if needed, but essentially user wants
+        // ID.
+        // We will focus on getBooking(Long) which already exists.
+
+        public BookingResponse cancelBooking(Long bookingId) {
+                BookingHeaderTable booking = bookingRepository.findById(bookingId)
+                                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+                if ("CANCELLED".equalsIgnoreCase(booking.getBookingStatus())) {
+                        throw new RuntimeException("Booking is already cancelled");
+                }
+
+                if ("COMPLETED".equalsIgnoreCase(booking.getBookingStatus())) {
+                        throw new RuntimeException("Cannot cancel a completed booking");
+                }
+
+                booking.setBookingStatus("CANCELLED");
+
+                // Release car if assigned
+                if (booking.getCar() != null) {
+                        CarMaster car = booking.getCar();
+                        car.setIsAvailable(CarMaster.AvailabilityStatus.Y);
+                        carRepository.save(car);
+                }
+
+                BookingHeaderTable savedBooking = bookingRepository.save(booking);
+                return mapToResponse(savedBooking);
+        }
+
+        public BookingResponse modifyBooking(Long bookingId, BookingRequest request) {
+                BookingHeaderTable booking = bookingRepository.findById(bookingId)
+                                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+                if (!"CONFIRMED".equalsIgnoreCase(booking.getBookingStatus())) {
+                        throw new RuntimeException("Only CONFIRMED bookings can be modified");
+                }
+
+                // Update Dates
+                if (request.getStartDate() != null)
+                        booking.setStartDate(request.getStartDate());
+                if (request.getEndDate() != null)
+                        booking.setEndDate(request.getEndDate());
+
+                // Handle Car Change logic if needed (simplified: just update car if provided
+                // and different)
+                if (request.getCarId() > 0 && booking.getCar().getCarId() != request.getCarId()) {
+                        CarMaster newCar = carRepository.findById(request.getCarId())
+                                        .orElseThrow(() -> new IllegalArgumentException("Invalid Car ID"));
+                        if (newCar.getIsAvailable() != CarMaster.AvailabilityStatus.Y) {
+                                throw new RuntimeException("Selected car is not available");
+                        }
+
+                        // Release old car
+                        CarMaster oldCar = booking.getCar();
+                        oldCar.setIsAvailable(CarMaster.AvailabilityStatus.Y);
+                        carRepository.save(oldCar);
+
+                        // Assign new car
+                        booking.setCar(newCar);
+                        booking.setBookcar(newCar.getCarName());
+                        newCar.setIsAvailable(CarMaster.AvailabilityStatus.N);
+                        carRepository.save(newCar);
+
+                        // Update rates
+                        if (booking.getCarType() != null) {
+                                booking.setDailyRate(booking.getCarType().getDailyRate());
+                        }
+                }
+
+                BookingHeaderTable savedBooking = bookingRepository.save(booking);
+                return mapToResponse(savedBooking);
+        }
+
+        public List<BookingResponse> getAllBookings() {
+                return bookingRepository.findAll().stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
+        }
+
+        public List<BookingResponse> getBookingsByEmail(String email) {
+                return bookingRepository.findByEmailId(email).stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
+        }
+
 }

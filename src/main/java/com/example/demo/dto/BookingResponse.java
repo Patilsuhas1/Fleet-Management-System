@@ -19,3 +19,4 @@ public class BookingResponse {
     private Double dailyRate;
     private Double totalAmount; // Optional, if calculated
 }
+

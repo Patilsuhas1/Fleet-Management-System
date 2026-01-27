@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Define a console appender for stdout -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} - %msg%n</pattern> <!-- Customize your log pattern here -->
+        </encoder>
+    </appender>
+
+    <!-- Define the root logger with the console appender attached -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <!-- Example of logging for a specific package with a different log level -->
+   <!--  <logger name="com.example.demo" level="DEBUG">
+        <appender-ref ref="STDOUT" />
+    </logger> -->
+
+    <!-- Example of logging for Spring framework -->
+    <logger name="org.springframework" level="INFO">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+</configuration>

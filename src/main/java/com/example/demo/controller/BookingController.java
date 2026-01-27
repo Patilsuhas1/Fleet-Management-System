@@ -26,6 +26,12 @@ public class BookingController {
         return ResponseEntity.ok(booking);
     }
 
+    @GetMapping("/user/{email}")
+    public ResponseEntity<java.util.List<BookingResponse>> getBookingsByUser(@PathVariable String email) {
+        java.util.List<BookingResponse> bookings = bookingService.getBookingsByEmail(email);
+        return ResponseEntity.ok(bookings);
+    }
+
     @PostMapping("/create")
     public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request) {
         BookingResponse booking = bookingService.createBooking(request);
@@ -50,6 +56,30 @@ public class BookingController {
         return ResponseEntity.ok(booking);
     }
 
+    // Endpoint removed as per single-integer ID refactor
+    /*
+     * @GetMapping("/search/{confirmationNumber}")
+     * public ResponseEntity<BookingResponse> getBookingByConfirmation(@PathVariable
+     * String confirmationNumber) {
+     * BookingResponse booking =
+     * bookingService.getBookingByConfirmation(confirmationNumber);
+     * return ResponseEntity.ok(booking);
+     * }
+     */
+
+    @PostMapping("/cancel/{bookingId}")
+    public ResponseEntity<BookingResponse> cancelBooking(@PathVariable Long bookingId) {
+        BookingResponse booking = bookingService.cancelBooking(bookingId);
+        return ResponseEntity.ok(booking);
+    }
+
+    @PutMapping("/modify/{bookingId}")
+    public ResponseEntity<BookingResponse> modifyBooking(@PathVariable Long bookingId,
+            @RequestBody BookingRequest request) {
+        BookingResponse booking = bookingService.modifyBooking(bookingId, request);
+        return ResponseEntity.ok(booking);
+    }
+
     @PostMapping("/storeDates")
     public String storeBookingDates(@RequestParam String start_date, @RequestParam String end_date,
             @RequestParam int cust_id) {
@@ -64,3 +94,4 @@ public class BookingController {
     }
 
 }
+

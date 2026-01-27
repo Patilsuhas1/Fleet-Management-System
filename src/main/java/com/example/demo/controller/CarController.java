@@ -20,6 +20,23 @@ public class CarController {
     @Autowired
     private CarService carService;
 
+    @Autowired
+    private com.example.demo.Service.ExcelUploadService excelUploadService;
+
+    @org.springframework.web.bind.annotation.PostMapping(value = "/cars/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadFile(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        String message = "";
+        try {
+            excelUploadService.save(file);
+            message = "Uploaded the file successfully: " + file.getOriginalFilename();
+            return ResponseEntity.status(HttpStatus.OK).body(new com.example.demo.dto.MessageResponse(message));
+        } catch (Exception e) {
+            message = "Could not upload the file: " + file.getOriginalFilename() + "!";
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
+                    .body(new com.example.demo.dto.MessageResponse(message));
+        }
+    }
+
     @GetMapping("cars")
     public ResponseEntity<List<Object[]>> getCarDetailsByHubAddress(@RequestParam String hubAddress) {
         List<Object[]> cars = carService.getCarsByHubAddress(hubAddress);
@@ -43,3 +60,4 @@ public class CarController {
         return new ResponseEntity<>(cars, HttpStatus.OK);
     }
 }
+

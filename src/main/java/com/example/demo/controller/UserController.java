@@ -34,6 +34,9 @@ public class UserController {
 	@Autowired
 	private JwtService jwtService;
 
+	@Autowired
+	private com.example.demo.Repository.CustomerRepository customerRepository;
+
 	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
 	@PostMapping("/register")
@@ -63,8 +66,18 @@ public class UserController {
 				response.put("token", jwt);
 				response.put("role", fullUser.getRole());
 				response.put("userId", fullUser.getId());
+				response.put("email", fullUser.getEmail());
+				response.put("username", fullUser.getUsername());
 				if (fullUser.getHub() != null) {
 					response.put("hubId", fullUser.getHub().getHubId());
+				}
+
+				com.example.demo.Entity.CustomerMaster customer = customerRepository.findByEmail(fullUser.getEmail());
+				if (customer != null) {
+					response.put("customerId", customer.getCustId());
+				} else {
+					// Fallback using userId if no customer record found, though this is risky
+					response.put("customerId", fullUser.getId());
 				}
 
 				return ResponseEntity.ok(response);
@@ -100,6 +113,8 @@ public class UserController {
 			response.put("token", jwt);
 			response.put("role", fullUser.getRole());
 			response.put("userId", fullUser.getId());
+			response.put("email", fullUser.getEmail());
+			response.put("username", fullUser.getUsername());
 			if (fullUser.getHub() != null) {
 				response.put("hubId", fullUser.getHub().getHubId());
 			}
@@ -112,3 +127,4 @@ public class UserController {
 	}
 
 }
+

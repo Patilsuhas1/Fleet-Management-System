@@ -9,6 +9,10 @@ import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.BaseColor;
+import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +58,6 @@ public class InvoiceService {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         try {
-            // ... [Keep existing logic] ...
             Optional<BookingHeaderTable> bookingOpt = bookingRepository.findById(bookingId);
             if (bookingOpt.isEmpty()) {
                 throw new RuntimeException("Booking not found with ID: " + bookingId);
@@ -64,79 +67,151 @@ public class InvoiceService {
             PdfWriter.getInstance(document, out);
             document.open();
 
+            // Font Definitions
+            Font brandFont = new Font(Font.FontFamily.HELVETICA, 24, Font.BOLD, new BaseColor(0, 102, 204));
             Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
-            Font regularFont = new Font(Font.FontFamily.HELVETICA, 12, Font.NORMAL);
-            Font boldFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+            Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.WHITE);
+            Font regularFont = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL);
+            Font boldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD);
+            Font smallFont = new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL, BaseColor.GRAY);
 
-            // Title
-            Paragraph title = new Paragraph("INVOICE", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            document.add(title);
+            // Header Section
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+
+            PdfPCell brandCell = new PdfPCell(new Paragraph("IndiaDrive", brandFont));
+            brandCell.setBorder(PdfPCell.NO_BORDER);
+            brandCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            headerTable.addCell(brandCell);
+
+            PdfPCell invoiceTitleCell = new PdfPCell(new Paragraph("TAX INVOICE", titleFont));
+            invoiceTitleCell.setBorder(PdfPCell.NO_BORDER);
+            invoiceTitleCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            invoiceTitleCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            headerTable.addCell(invoiceTitleCell);
+
+            document.add(headerTable);
             document.add(new Paragraph("\n"));
 
-            // Booking Details
-            document.add(new Paragraph("Booking ID: " + booking.getBookingId(), regularFont));
-            document.add(new Paragraph("Confirmation Number: " + booking.getConfirmationNumber(), boldFont));
-            document.add(new Paragraph("Date: " + LocalDate.now(), regularFont));
+            // Info Section (Customer & Booking)
+            PdfPTable infoTable = new PdfPTable(2);
+            infoTable.setWidthPercentage(100);
+
+            // Customer Info
+            PdfPCell customerCell = new PdfPCell();
+            customerCell.setBorder(PdfPCell.NO_BORDER);
+            customerCell.addElement(new Paragraph("BILL TO:", boldFont));
+            customerCell.addElement(new Paragraph(booking.getFirstName() + " " + booking.getLastName(), regularFont));
+            customerCell.addElement(new Paragraph(booking.getEmailId(), regularFont));
+            customerCell.addElement(new Paragraph(
+                    booking.getAddress() != null ? booking.getAddress() : "Address Not Provided", regularFont));
+            infoTable.addCell(customerCell);
+
+            // Booking Info
+            PdfPCell bookingInfoCell = new PdfPCell();
+            bookingInfoCell.setBorder(PdfPCell.NO_BORDER);
+            bookingInfoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            Paragraph bookingLines = new Paragraph();
+            bookingLines.setAlignment(Element.ALIGN_RIGHT);
+            bookingLines.add(new Paragraph("Booking ID: " + booking.getBookingId(), regularFont));
+            bookingLines.add(new Paragraph("Confirmation: " + booking.getConfirmationNumber(), boldFont));
+            bookingLines.add(new Paragraph(
+                    "Date: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy")), regularFont));
+            bookingInfoCell.addElement(bookingLines);
+            infoTable.addCell(bookingInfoCell);
+
+            document.add(infoTable);
             document.add(new Paragraph("\n"));
 
-            // Customer Details
-            document.add(new Paragraph("Customer Details:", boldFont));
-            document.add(new Paragraph("Name: " + booking.getFirstName() + " " + booking.getLastName(), regularFont));
-            document.add(new Paragraph("Email: " + booking.getEmailId(), regularFont));
-            document.add(new Paragraph("Address: " + (booking.getAddress() != null ? booking.getAddress() : "N/A"),
-                    regularFont));
+            // Vehicle Section
+            Paragraph vehicleHeader = new Paragraph("VEHICLE DETAILS", boldFont);
+            vehicleHeader.setSpacingAfter(5f);
+            document.add(vehicleHeader);
+
+            PdfPTable vehicleTable = new PdfPTable(3);
+            vehicleTable.setWidthPercentage(100);
+            vehicleTable.addCell(createCell("Car Model", boldFont));
+            vehicleTable.addCell(createCell("Type", boldFont));
+            vehicleTable.addCell(createCell("Number Plate", boldFont));
+
+            vehicleTable.addCell(createCell(booking.getBookcar(), regularFont));
+            vehicleTable.addCell(createCell(
+                    booking.getCarType() != null ? booking.getCarType().getCarTypeName() : "N/A", regularFont));
+            vehicleTable.addCell(
+                    createCell(booking.getCar() != null ? booking.getCar().getNumberPlate() : "N/A", regularFont));
+            document.add(vehicleTable);
             document.add(new Paragraph("\n"));
 
-            // Car Details
-            document.add(new Paragraph("Car Details:", boldFont));
-            document.add(new Paragraph("Car Name: " + booking.getBookcar(), regularFont));
-            document.add(new Paragraph("\n"));
-
-            // Rental Details
-            document.add(new Paragraph("Rental Period:", boldFont));
-            document.add(new Paragraph(
-                    "Pickup Hub: " + (booking.getPickupHub() != null ? booking.getPickupHub().getHubName() : "N/A"),
-                    regularFont));
-            document.add(new Paragraph(
-                    "Return Hub: " + (booking.getReturnHub() != null ? booking.getReturnHub().getHubName() : "N/A"),
-                    regularFont));
-            document.add(new Paragraph("Start Date: " + booking.getStartDate(), regularFont));
-            document.add(new Paragraph("End Date: " + booking.getEndDate(), regularFont));
-
-            // Calculation logic
+            // Calculation
             long days = 0;
             LocalDate calcEndDate = booking.getEndDate();
-
             if (booking.getReturnTime() != null) {
                 calcEndDate = booking.getReturnTime().toLocalDate();
             }
-
             if (booking.getStartDate() != null && calcEndDate != null) {
-                try {
-                    days = java.time.temporal.ChronoUnit.DAYS.between(booking.getStartDate(), calcEndDate);
-                    if (days == 0)
-                        days = 1; // Minimum 1 day charge
-                } catch (Exception e) {
-                    days = 1; // Fallback
-                }
+                days = java.time.temporal.ChronoUnit.DAYS.between(booking.getStartDate(), calcEndDate);
+                if (days <= 0)
+                    days = 1;
             }
 
-            double totalAmount = days * booking.getDailyRate();
+            double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
+            double rentalSubtotal = days * dailyRate;
+            double addonAmt = 500.0; // Placeholder or fetched if supported
+            double totalAmount = rentalSubtotal + addonAmt;
 
-            document.add(new Paragraph("Duration: " + days + " Days", regularFont));
-            document.add(new Paragraph("Daily Rate: $" + String.format("%.2f", booking.getDailyRate()), regularFont));
-            document.add(new Paragraph("\n"));
+            // Charges Table
+            PdfPTable chargesTable = new PdfPTable(4);
+            chargesTable.setWidthPercentage(100);
+            chargesTable.setWidths(new float[] { 4, 1, 2, 2 });
 
-            // Total Amount
-            Paragraph total = new Paragraph("TOTAL AMOUNT: $" + String.format("%.2f", totalAmount), titleFont);
-            total.setAlignment(Element.ALIGN_RIGHT);
-            document.add(total);
+            chargesTable.addCell(createStyledHeader("Description", headerFont));
+            chargesTable.addCell(createStyledHeader("Qty", headerFont));
+            chargesTable.addCell(createStyledHeader("Rate", headerFont));
+            chargesTable.addCell(createStyledHeader("Amount", headerFont));
 
-            document.add(new Paragraph("\n"));
-            Paragraph footer = new Paragraph("Thank you for choosing IndiaDrive!", regularFont);
+            // Base Rental Row
+            chargesTable
+                    .addCell(createCell("Base Rental - " + booking.getBookcar() + " (" + days + " days)", regularFont));
+            chargesTable.addCell(createCell(String.valueOf(days), regularFont));
+            chargesTable.addCell(createCell("Rs. " + String.format("%.2f", dailyRate), regularFont));
+            chargesTable.addCell(createCell("Rs. " + String.format("%.2f", rentalSubtotal), regularFont));
+
+            // Addons Row
+            chargesTable.addCell(createCell("Value Added Services & Add-ons", regularFont));
+            chargesTable.addCell(createCell("1", regularFont));
+            chargesTable.addCell(createCell("Rs. 500.00", regularFont));
+            chargesTable.addCell(createCell("Rs. 500.00", regularFont));
+
+            document.add(chargesTable);
+
+            // Total Section
+            PdfPTable totalTable = new PdfPTable(2);
+            totalTable.setWidthPercentage(40);
+            totalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+
+            totalTable.addCell(createCell("Subtotal:", boldFont));
+            totalTable.addCell(createCell("Rs. " + String.format("%.2f", totalAmount), regularFont));
+
+            PdfPCell totalLabelCell = new PdfPCell(new Paragraph("TOTAL AMOUNT", boldFont));
+            totalLabelCell.setBackgroundColor(new BaseColor(240, 240, 240));
+            totalTable.addCell(totalLabelCell);
+
+            PdfPCell totalValCell = new PdfPCell(new Paragraph("Rs. " + String.format("%.2f", totalAmount), boldFont));
+            totalValCell.setBackgroundColor(new BaseColor(240, 240, 240));
+            totalTable.addCell(totalValCell);
+
+            document.add(totalTable);
+
+            document.add(new Paragraph("\n\n"));
+            Paragraph footer = new Paragraph("Thank you for choosing IndiaDrive!\nSafe Travels.", regularFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
+
+            Paragraph terms = new Paragraph("Terms: This is a computer generated invoice. No signature is required.",
+                    smallFont);
+            terms.setAlignment(Element.ALIGN_CENTER);
+            terms.setSpacingBefore(20f);
+            document.add(terms);
 
             document.close();
 
@@ -145,5 +220,20 @@ public class InvoiceService {
         }
 
         return out.toByteArray();
+    }
+
+    private PdfPCell createCell(String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Paragraph(text, font));
+        cell.setPadding(8f);
+        cell.setBorderColor(BaseColor.LIGHT_GRAY);
+        return cell;
+    }
+
+    private PdfPCell createStyledHeader(String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Paragraph(text, font));
+        cell.setBackgroundColor(new BaseColor(0, 102, 204));
+        cell.setPadding(8f);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        return cell;
     }
 }

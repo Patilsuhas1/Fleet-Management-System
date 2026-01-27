@@ -48,3 +48,4 @@ public class CarService {
         return carRepository.findAvailableCars(hubId, startDate, endDate);
     }
 }
+
