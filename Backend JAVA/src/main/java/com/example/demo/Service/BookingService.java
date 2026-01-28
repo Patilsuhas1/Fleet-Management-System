@@ -220,11 +220,13 @@ public class BookingService {
                         double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
                         double rentalAmt = days * dailyRate;
 
-                        // Calculate actual Add-on rates
-                        double totalAddonAmt = bookingDetailRepository.findByBooking_BookingId(booking.getBookingId())
+                        // Calculate actual Add-on rates (multiplied by rental days)
+                        double totalAddonDailyRate = bookingDetailRepository
+                                        .findByBooking_BookingId(booking.getBookingId())
                                         .stream()
                                         .mapToDouble(BookingDetailTable::getAddonRate)
                                         .sum();
+                        double totalAddonAmt = totalAddonDailyRate * days;
 
                         invoice.setRentalAmt(rentalAmt);
                         invoice.setTotalAddonAmt(totalAddonAmt);
@@ -293,7 +295,8 @@ public class BookingService {
 
                 List<BookingDetailTable> details = bookingDetailRepository
                                 .findByBooking_BookingId(booking.getBookingId());
-                double totalAddonAmt = details.stream().mapToDouble(BookingDetailTable::getAddonRate).sum();
+                double totalAddonDailyRate = details.stream().mapToDouble(BookingDetailTable::getAddonRate).sum();
+                double totalAddonAmt = totalAddonDailyRate * days;
                 double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
                 double totalAmt = (days * dailyRate) + totalAddonAmt;
 

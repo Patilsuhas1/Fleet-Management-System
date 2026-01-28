@@ -171,14 +171,38 @@ const ManageBooking = () => {
 
                             <div className="bg-glass p-4 rounded-4 mb-5 border-0 shadow-sm">
                                 <h5 className="fw-bold mb-4">Financial Summary</h5>
-                                <div className="d-flex justify-content-between mb-3 text-muted">
-                                    <span>Base Rental Rate</span>
-                                    <span>₹{booking.dailyRate?.toLocaleString() || '2,500'} / day</span>
-                                </div>
-                                <div className="d-flex justify-content-between mb-2 text-muted">
-                                    <span>Added Services & Add-ons</span>
-                                    <span className="fw-bold">₹{booking.totalAddonAmount?.toLocaleString() || '0'}</span>
-                                </div>
+                                {(() => {
+                                    const start = new Date(booking.startDate);
+                                    const end = new Date(booking.endDate);
+                                    const days = Math.max(1, Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)));
+                                    const baseRentalTotal = (booking.dailyRate || 0) * days;
+                                    const addonTotal = booking.totalAddonAmount || 0;
+                                    const addonDaily = days > 0 ? (addonTotal / days) : 0;
+
+                                    return (
+                                        <>
+                                            <div className="d-flex justify-content-between mb-2 text-muted">
+                                                <span>Rental Duration</span>
+                                                <span className="fw-medium">{days} Day{days > 1 ? 's' : ''}</span>
+                                            </div>
+                                            <div className="d-flex justify-content-between mb-3 text-muted">
+                                                <span>Base Rental ({days} Days)</span>
+                                                <span>
+                                                    <small className="me-2">(₹{booking.dailyRate?.toLocaleString()}/day)</small>
+                                                    <span className="fw-bold text-dark">₹{baseRentalTotal.toLocaleString()}</span>
+                                                </span>
+                                            </div>
+
+                                            <div className="d-flex justify-content-between mb-2 text-muted">
+                                                <span>Added Services & Add-ons ({days} Days)</span>
+                                                <span>
+                                                    <small className="me-2">(₹{addonDaily.toLocaleString(undefined, { maximumFractionDigits: 0 })}/day)</small>
+                                                    <span className="fw-bold text-dark">₹{addonTotal.toLocaleString()}</span>
+                                                </span>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
 
                                 {booking.selectedAddOns && booking.selectedAddOns.length > 0 && (
                                     <div className="ms-3 mb-3">

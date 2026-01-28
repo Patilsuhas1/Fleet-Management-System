@@ -1,7 +1,9 @@
 package com.example.demo.Service;
 
 import com.example.demo.Entity.BookingHeaderTable;
+import com.example.demo.Entity.BookingDetailTable;
 import com.example.demo.Repository.BookingRepository;
+import com.example.demo.Repository.BookingDetailRepository;
 import com.itextpdf.text.Document;
 import java.time.LocalDate;
 import com.itextpdf.text.DocumentException;
@@ -28,6 +30,9 @@ public class InvoiceService {
 
     @Autowired
     private org.springframework.mail.javamail.JavaMailSender mailSender;
+
+    @Autowired
+    private BookingDetailRepository bookingDetailRepository;
 
     public void sendInvoiceEmail(Long bookingId, String toEmail) {
         try {
@@ -156,7 +161,12 @@ public class InvoiceService {
 
             double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
             double rentalSubtotal = days * dailyRate;
-            double addonAmt = 500.0; // Placeholder or fetched if supported
+
+            double totalAddonDailyRate = bookingDetailRepository.findByBooking_BookingId(bookingId)
+                    .stream()
+                    .mapToDouble(BookingDetailTable::getAddonRate)
+                    .sum();
+            double addonAmt = totalAddonDailyRate * days;
             double totalAmount = rentalSubtotal + addonAmt;
 
             // Charges Table
@@ -178,9 +188,9 @@ public class InvoiceService {
 
             // Addons Row
             chargesTable.addCell(createCell("Value Added Services & Add-ons", regularFont));
-            chargesTable.addCell(createCell("1", regularFont));
-            chargesTable.addCell(createCell("Rs. 500.00", regularFont));
-            chargesTable.addCell(createCell("Rs. 500.00", regularFont));
+            chargesTable.addCell(createCell(String.valueOf(days), regularFont));
+            chargesTable.addCell(createCell("Rs. " + String.format("%.2f", totalAddonDailyRate), regularFont));
+            chargesTable.addCell(createCell("Rs. " + String.format("%.2f", addonAmt), regularFont));
 
             document.add(chargesTable);
 
