@@ -235,6 +235,21 @@ const Booking = () => {
             alert('Please enter an email to search.');
             return;
         }
+
+        // Restriction Logic
+        if (!currentUser) {
+            alert('Guest users cannot search for member details. Please fill in the details manually.');
+            return;
+        }
+
+        if (currentUser.role === 'CUSTOMER') {
+            const loggedInEmail = currentUser.email || currentUser.username;
+            if (customer.email.toLowerCase() !== loggedInEmail.toLowerCase()) {
+                alert('You can only retrieve details for your own registered email: ' + loggedInEmail);
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             const data = await ApiService.findCustomer(customer.email);
@@ -524,7 +539,12 @@ const Booking = () => {
                                     }}
                                     onKeyDown={e => e.key === 'Enter' && handleFindCustomer()}
                                 />
-                                <button className="btn btn-premium rounded-pill px-4" type="button" onClick={handleFindCustomer}>
+                                <button
+                                    className="btn btn-premium rounded-pill px-4"
+                                    type="button"
+                                    onClick={handleFindCustomer}
+                                    title={!currentUser ? "Login to retrieve your details" : "Fetch registered member details"}
+                                >
                                     Find Member
                                 </button>
                             </div>

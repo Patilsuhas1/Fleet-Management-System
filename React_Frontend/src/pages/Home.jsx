@@ -57,7 +57,7 @@ const Home = () => {
                                 {t('home.heroSub')}
                             </p>
                             <div className="d-flex gap-4 mt-2">
-                                <Link to={AuthService.getCurrentUser() ? "/booking" : "/login"} className="btn btn-premium btn-lg">
+                                <Link to="/booking" className="btn btn-premium btn-lg">
                                     {t('home.bookNow')}
                                 </Link>
                                 {AuthService.getCurrentUser() && (

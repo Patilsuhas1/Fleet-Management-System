@@ -28,13 +28,13 @@ const Navbar = ({ theme, toggleTheme }) => {
                             <Link className="nav-link px-3" to="/">Home</Link>
                         </li>
 
+                        <li className="nav-item">
+                            <Link className="nav-link px-3" to="/booking">Book a Car</Link>
+                        </li>
+
                         {/* Customer Links */}
                         {role === 'CUSTOMER' && (
                             <>
-
-                                <li className="nav-item">
-                                    <Link className="nav-link px-3" to="/booking">Book a Car</Link>
-                                </li>
                                 <li className="nav-item">
                                     <Link className="nav-link px-3" to="/my-bookings">My Bookings</Link>
                                 </li>
