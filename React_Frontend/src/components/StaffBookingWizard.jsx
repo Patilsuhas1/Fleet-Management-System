@@ -17,6 +17,29 @@ const StaffBookingWizard = ({ onClose }) => {
     const [selectedCar, setSelectedCar] = useState(null);
     const [addOns, setAddOns] = useState([]);
     const [selectedAddOns, setSelectedAddOns] = useState([]);
+    const [childSeatQty, setChildSeatQty] = useState(1);
+
+    // Cost Calculation Helpers
+    const calculateRentalDays = () => {
+        const start = new Date(dates.rentalDate);
+        const end = new Date(dates.returnDate);
+        const diffTime = Math.abs(end - start);
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    };
+
+    const calculateTotalCost = () => {
+        if (!selectedCar) return 0;
+        const days = calculateRentalDays();
+        const carRate = selectedCar.carType?.dailyRate || 0;
+        const addonDaily = addOns
+            .filter(a => selectedAddOns.includes(a.addOnId))
+            .reduce((sum, a) => {
+                const isChildSeat = a.addOnName.toLowerCase().includes('child seat');
+                const rate = a.addonDailyRate || a.addOnRate || 0;
+                return sum + (isChildSeat ? rate * childSeatQty : rate);
+            }, 0);
+        return days * (carRate + addonDaily);
+    };
 
     // Customer Data
     const [customerEmail, setCustomerEmail] = useState('');
@@ -92,8 +115,21 @@ const StaffBookingWizard = ({ onClose }) => {
                 returnHubId: pickupHubId, // Return to same hub for on-spot
                 rentalDate: dates.rentalDate,
                 returnDate: dates.returnDate,
-                addOnIds: selectedAddOns
+                addOnIds: []
             };
+
+            // Process Add-ons with Quantity
+            const finalAddOnIds = [...selectedAddOns];
+            const childSeatAddOn = addOns.find(a => a.addOnName.toLowerCase().includes('child seat'));
+            if (childSeatAddOn && selectedAddOns.includes(childSeatAddOn.addOnId)) {
+                const baseIds = selectedAddOns.filter(id => id !== childSeatAddOn.addOnId);
+                for (let i = 0; i < childSeatQty; i++) {
+                    baseIds.push(childSeatAddOn.addOnId);
+                }
+                bookingRequest.addOnIds = baseIds;
+            } else {
+                bookingRequest.addOnIds = finalAddOnIds;
+            }
 
             const booking = await ApiService.createBooking(bookingRequest);
 
@@ -168,24 +204,45 @@ const StaffBookingWizard = ({ onClose }) => {
                         </div>
 
                         <h6 className="mb-3 uppercase small tracking-wider text-primary">Available Extras</h6>
-                        <div className="d-flex flex-wrap gap-2 mb-4">
-                            {addOns.map(addon => (
-                                <div key={addon.addOnId} className="flex-fill">
-                                    <input className="btn-check" type="checkbox" id={`btn-check-${addon.addOnId}`}
-                                        checked={selectedAddOns.includes(addon.addOnId)}
-                                        onChange={(e) => {
-                                            if (e.target.checked) setSelectedAddOns([...selectedAddOns, addon.addOnId]);
-                                            else setSelectedAddOns(selectedAddOns.filter(id => id !== addon.addOnId));
-                                        }}
-                                    />
-                                    <label className="btn btn-outline-primary w-100 rounded-pill py-2 glass-effect border text-start px-3" htmlFor={`btn-check-${addon.addOnId}`}>
-                                        <span className="d-flex justify-content-between align-items-center">
-                                            <span>{addon.addOnName}</span>
-                                            <span className="small">₹{addon.addOnRate}</span>
-                                        </span>
-                                    </label>
-                                </div>
-                            ))}
+                        <div className="row g-3 mb-4">
+                            {addOns.map(addon => {
+                                const isChildSeat = addon.addOnName.toLowerCase().includes('child seat');
+                                const isSelected = selectedAddOns.includes(addon.addOnId);
+
+                                return (
+                                    <div key={addon.addOnId} className="col-md-6">
+                                        <div className={`p-3 rounded-4 glass-effect border h-100 ${isSelected ? 'border-primary' : ''}`}>
+                                            <div className="d-flex align-items-center gap-3">
+                                                <input className="form-check-input" type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedAddOns([...selectedAddOns, addon.addOnId]);
+                                                        else setSelectedAddOns(selectedAddOns.filter(id => id !== addon.addOnId));
+                                                    }}
+                                                />
+                                                <div className="w-100">
+                                                    <div className="d-flex justify-content-between">
+                                                        <span className="fw-bold">{addon.addOnName}</span>
+                                                        <span className="text-primary small">₹{addon.addonDailyRate || addon.addOnRate}</span>
+                                                    </div>
+
+                                                    {isChildSeat && isSelected && (
+                                                        <div className="mt-2 animate-fade-in">
+                                                            <select
+                                                                className="form-select form-select-sm rounded-pill w-auto border-primary"
+                                                                value={childSeatQty}
+                                                                onChange={(e) => setChildSeatQty(Number(e.target.value))}
+                                                            >
+                                                                {[1, 2, 3].map(n => <option key={n} value={n}>{n} Seats</option>)}
+                                                            </select>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         <div className="d-flex justify-content-between pt-3">
@@ -256,7 +313,7 @@ const StaffBookingWizard = ({ onClose }) => {
                             <button className="btn btn-premium rounded-pill px-5 py-3 fw-bold"
                                 disabled={loading || (!customerDetails && !isNewCustomer && !newCustomerData.firstName)}
                                 onClick={handleCreateBooking}>
-                                {loading ? 'Finalizing...' : 'Confirm & Handover (₹)'}
+                                {loading ? 'Finalizing...' : `Confirm & Handover (₹${calculateTotalCost().toLocaleString()})`}
                             </button>
                         </div>
                     </div>

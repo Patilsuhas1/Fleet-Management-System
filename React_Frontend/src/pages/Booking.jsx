@@ -22,6 +22,33 @@ const Booking = () => {
     const [dates, setDates] = useState({ startDate: '', endDate: '' });
     const [selectedCar, setSelectedCar] = useState(null);
     const [selectedAddOnIds, setSelectedAddOnIds] = useState([]);
+    const [childSeatQty, setChildSeatQty] = useState(1);
+
+    // Calculate Rental Days
+    const calculateRentalDays = () => {
+        if (!dates.startDate || !dates.endDate) return 1;
+        const start = new Date(dates.startDate);
+        const end = new Date(dates.endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays || 1;
+    };
+
+    // Calculate Total Cost
+    const calculateTotalCost = () => {
+        if (!selectedCar) return 0;
+        const days = calculateRentalDays();
+        const carRate = selectedCar.carType?.dailyRate || 0;
+
+        const addonTotalDaily = addOns
+            .filter(a => selectedAddOnIds.includes(a.addOnId))
+            .reduce((sum, a) => {
+                const isChildSeat = a.addOnName.toLowerCase().includes('child seat');
+                return sum + (isChildSeat ? a.addonDailyRate * childSeatQty : a.addonDailyRate);
+            }, 0);
+
+        return days * (carRate + addonTotalDaily);
+    };
 
     // Customer States
     const [customer, setCustomer] = useState({
@@ -253,14 +280,27 @@ const Booking = () => {
             return;
         }
 
+        // Process Add-ons with Quantity
+        const finalAddOnIds = [...selectedAddOnIds];
+        const childSeatAddOn = addOns.find(a => a.addOnName.toLowerCase().includes('child seat'));
+        let addOnIdsToSubmit = finalAddOnIds;
+
+        if (childSeatAddOn && selectedAddOnIds.includes(childSeatAddOn.addOnId)) {
+            const baseIds = selectedAddOnIds.filter(id => id !== childSeatAddOn.addOnId);
+            for (let i = 0; i < childSeatQty; i++) {
+                baseIds.push(childSeatAddOn.addOnId);
+            }
+            addOnIdsToSubmit = baseIds;
+        }
+
         const bookingRequest = {
             carId: selectedCar.carId,
-            customerId: customer.custId, // Using the ID from saved customer
+            customerId: customer.custId,
             pickupHubId: selectedHub,
             returnHubId: selectedHub,
             startDate: dates.startDate,
             endDate: dates.endDate,
-            addOnIds: selectedAddOnIds,
+            addOnIds: addOnIdsToSubmit,
             email: customer.email
         };
 
@@ -422,20 +462,45 @@ const Booking = () => {
                             <h4 className="fw-bold mb-4">Available Extras</h4>
                             {addOns.length > 0 ? (
                                 <div className="list-group list-group-flush gap-3 bg-transparent">
-                                    {addOns.map(addon => (
-                                        <label key={addon.addOnId} className="list-group-item d-flex gap-3 align-items-center bg-transparent border-0 p-3 rounded-4 glass-effect">
-                                            <input
-                                                className="form-check-input flex-shrink-0"
-                                                type="checkbox"
-                                                checked={selectedAddOnIds.includes(addon.addOnId)}
-                                                onChange={() => toggleAddOn(addon.addOnId)}
-                                            />
-                                            <div className="d-flex justify-content-between w-100 align-items-center">
-                                                <span className="fw-medium">{addon.addOnName}</span>
-                                                <span className="text-primary fw-bold">₹{addon.addonDailyRate.toFixed(0)}</span>
+                                    {addOns.map(addon => {
+                                        const isChildSeat = addon.addOnName.toLowerCase().includes('child seat');
+                                        const isSelected = selectedAddOnIds.includes(addon.addOnId);
+
+                                        return (
+                                            <div key={addon.addOnId} className="list-group-item bg-transparent border-0 p-3 rounded-4 glass-effect mb-2">
+                                                <div className="d-flex gap-3 align-items-center mb-2">
+                                                    <input
+                                                        className="form-check-input flex-shrink-0"
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={() => toggleAddOn(addon.addOnId)}
+                                                    />
+                                                    <div className="d-flex justify-content-between w-100 align-items-center">
+                                                        <span className="fw-medium">{addon.addOnName}</span>
+                                                        <span className="text-primary fw-bold">₹{addon.addonDailyRate.toFixed(0)}</span>
+                                                    </div>
+                                                </div>
+
+                                                {isChildSeat && isSelected && (
+                                                    <div className="ms-5 mt-2 animate-fade-in">
+                                                        <label className="small text-muted mb-1 d-block">Quantity</label>
+                                                        <select
+                                                            className="form-select form-select-sm rounded-pill w-auto px-3 border-primary"
+                                                            value={childSeatQty}
+                                                            onChange={(e) => setChildSeatQty(Number(e.target.value))}
+                                                        >
+                                                            <option value="1">1 Seat</option>
+                                                            <option value="2">2 Seats</option>
+                                                            <option value="3">3 Seats</option>
+                                                        </select>
+                                                        <small className="text-primary mt-1 d-block fw-bold">
+                                                            Total: ₹{(addon.addonDailyRate * childSeatQty).toFixed(0)}
+                                                        </small>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </label>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : <p className="text-muted">No add-ons available at this time.</p>}
                         </div>
@@ -639,6 +704,38 @@ const Booking = () => {
                             <div className="col-12 border-top border-light pt-3 mt-3">
                                 <label className="small text-muted mb-0">Renter</label>
                                 <p className="fw-bold mb-0">{customer.firstName} {customer.lastName} ({customer.email})</p>
+                            </div>
+
+                            {/* Add-ons Recap */}
+                            {selectedAddOnIds.length > 0 && (
+                                <div className="col-12 mt-3 p-3 bg-primary bg-opacity-10 rounded-4">
+                                    <label className="small text-muted d-block mb-2">Selected Extras</label>
+                                    {addOns.filter(a => selectedAddOnIds.includes(a.addOnId)).map(a => (
+                                        <div key={a.addOnId} className="d-flex justify-content-between small">
+                                            <span>
+                                                {a.addOnName}
+                                                {a.addOnName.toLowerCase().includes('child seat') && ` (x${childSeatQty})`}
+                                            </span>
+                                            <span className="fw-bold">
+                                                ₹{a.addOnName.toLowerCase().includes('child seat') ? (a.addonDailyRate * childSeatQty) : a.addonDailyRate}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {/* Total Cost Display */}
+                            <div className="col-12 mt-4 pt-3 border-top border-light">
+                                <div className="d-flex justify-content-between align-items-center bg-primary bg-opacity-10 p-4 rounded-4">
+                                    <div>
+                                        <label className="small text-muted d-block mb-1 uppercase tracking-wider">Estimated Total</label>
+                                        <h2 className="fw-bold mb-0 text-primary">₹{calculateTotalCost().toLocaleString()}</h2>
+                                    </div>
+                                    <div className="text-end">
+                                        <span className="badge bg-primary rounded-pill px-3 py-2">
+                                            {calculateRentalDays()} Day{calculateRentalDays() > 1 ? 's' : ''} Rental
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

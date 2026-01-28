@@ -18,5 +18,6 @@ public class BookingResponse {
     private LocalDate endDate;
     private Double dailyRate;
     private Double totalAmount; // Optional, if calculated
+    private Double totalAddonAmount;
+    private java.util.List<String> selectedAddOns;
 }
-

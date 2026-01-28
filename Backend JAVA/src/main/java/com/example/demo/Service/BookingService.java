@@ -35,6 +35,12 @@ public class BookingService {
         @Autowired
         private InvoiceService invoiceService;
 
+        @Autowired
+        private AddOnRepository addOnRepository;
+
+        @Autowired
+        private BookingDetailRepository bookingDetailRepository;
+
         public BookingResponse createBooking(BookingRequest request) {
                 BookingHeaderTable booking = new BookingHeaderTable();
 
@@ -83,6 +89,20 @@ public class BookingService {
                 }
 
                 BookingHeaderTable savedBooking = bookingRepository.save(booking);
+
+                // Process Add-ons
+                if (request.getAddOnIds() != null && !request.getAddOnIds().isEmpty()) {
+                        for (Integer addOnId : request.getAddOnIds()) {
+                                addOnRepository.findById(addOnId).ifPresent(addon -> {
+                                        BookingDetailTable detail = new BookingDetailTable();
+                                        detail.setBooking(savedBooking);
+                                        detail.setAddon(addon);
+                                        detail.setAddonRate(addon.getAddonDailyRate());
+                                        bookingDetailRepository.save(detail);
+                                });
+                        }
+                }
+
                 return mapToResponse(savedBooking);
         }
 
@@ -199,11 +219,16 @@ public class BookingService {
 
                         double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
                         double rentalAmt = days * dailyRate;
-                        double addonAmt = 500.0; // Standard addon placeholder
+
+                        // Calculate actual Add-on rates
+                        double totalAddonAmt = bookingDetailRepository.findByBooking_BookingId(booking.getBookingId())
+                                        .stream()
+                                        .mapToDouble(BookingDetailTable::getAddonRate)
+                                        .sum();
 
                         invoice.setRentalAmt(rentalAmt);
-                        invoice.setTotalAddonAmt(addonAmt);
-                        invoice.setTotalAmt(rentalAmt + addonAmt);
+                        invoice.setTotalAddonAmt(totalAddonAmt);
+                        invoice.setTotalAmt(rentalAmt + totalAddonAmt);
                         invoice.setRate("Daily: " + dailyRate);
 
                         invoiceRepository.save(invoice);
@@ -257,6 +282,29 @@ public class BookingService {
                 // Assuming primitives in entity, so no null check needed, but good to be safe
                 // if changed later
                 response.setDailyRate(booking.getDailyRate());
+
+                // Financial Calculations
+                long days = 1;
+                if (booking.getStartDate() != null && booking.getEndDate() != null) {
+                        days = java.time.temporal.ChronoUnit.DAYS.between(booking.getStartDate(), booking.getEndDate());
+                        if (days <= 0)
+                                days = 1;
+                }
+
+                List<BookingDetailTable> details = bookingDetailRepository
+                                .findByBooking_BookingId(booking.getBookingId());
+                double totalAddonAmt = details.stream().mapToDouble(BookingDetailTable::getAddonRate).sum();
+                double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
+                double totalAmt = (days * dailyRate) + totalAddonAmt;
+
+                response.setTotalAddonAmount(totalAddonAmt);
+                response.setTotalAmount(totalAmt);
+
+                // Fetch and set selected add-ons
+                List<String> addOnNames = details.stream()
+                                .map(detail -> detail.getAddon().getAddOnName())
+                                .collect(Collectors.toList());
+                response.setSelectedAddOns(addOnNames);
 
                 return response;
         }

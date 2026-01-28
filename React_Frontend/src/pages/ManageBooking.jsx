@@ -98,19 +98,8 @@ const ManageBooking = () => {
     );
 
     const calculateTotal = () => {
-        if (booking.totalAmount || booking.totalCost) return booking.totalAmount || booking.totalCost;
-        if (!booking.startDate || !booking.endDate) return 'Calculated';
-
-        try {
-            const start = new Date(booking.startDate);
-            const end = new Date(booking.endDate);
-            const diffTime = Math.abs(end - start);
-            const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-            const rate = booking.dailyRate || booking.carType?.dailyRate || 2500;
-            return (diffDays * rate) + 500;
-        } catch (e) {
-            return 'Calculated';
-        }
+        if (booking.totalAmount) return booking.totalAmount.toLocaleString();
+        return 'Calculated';
     };
 
     const handleCancel = async () => {
@@ -184,12 +173,23 @@ const ManageBooking = () => {
                                 <h5 className="fw-bold mb-4">Financial Summary</h5>
                                 <div className="d-flex justify-content-between mb-3 text-muted">
                                     <span>Base Rental Rate</span>
-                                    <span>₹{booking.dailyRate || booking.carType?.dailyRate || '2500'} / day</span>
+                                    <span>₹{booking.dailyRate?.toLocaleString() || '2,500'} / day</span>
                                 </div>
-                                <div className="d-flex justify-content-between mb-3 text-muted">
+                                <div className="d-flex justify-content-between mb-2 text-muted">
                                     <span>Added Services & Add-ons</span>
-                                    <span>₹500.00</span>
+                                    <span className="fw-bold">₹{booking.totalAddonAmount?.toLocaleString() || '0'}</span>
                                 </div>
+
+                                {booking.selectedAddOns && booking.selectedAddOns.length > 0 && (
+                                    <div className="ms-3 mb-3">
+                                        {booking.selectedAddOns.map((addon, index) => (
+                                            <div key={index} className="d-flex justify-content-between x-small text-muted py-1 border-start ps-3">
+                                                <span>{addon}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <hr />
                                 <div className="d-flex justify-content-between align-items-center">
                                     <span className="h5 fw-bold mb-0">Total Amount Paid</span>

@@ -28,28 +28,22 @@ const StaffDashboard = () => {
             const data = await ApiService.getBooking(bookingId);
             setBookingDetails(data);
 
-            // Set initial selected car
-            if (data.carName) {
-                // We might only have carName, ideally we need ID. 
-                // Assuming backend response includes carId inside car object or separate field?
-                // The current mapToResponse uses carName string. 
-                // We need to fetch available cars to link IDs properly.
+            // Status Verification
+            if (data.bookingStatus === 'ACTIVE') {
+                setMessage({ type: 'info', text: 'This vehicle has already been handed over.' });
+                setLoading(false);
+                return;
             }
-
-            // Fetch available cars for this hub/dates to allow swapping
-            // Note: We need hubId which might not be in response explicitly unless mapped.
-            // Let's assume we can fetch cars based on hub name or we need to update backend to return IDs.
-            // For now, let's try to fetch available cars using the hub name if possible or just list all (fallback).
-            // Actually, mapToResponse returns 'pickupHub' name. We need ID to call getAvailableCars properly.
-            // But let's proceed with just opening modal first.
-
-            // Fix: We need carId. 
-            // Since we can't easily get Available Cars without HubID, we might need to rely on the backend to validate swap.
-            // Or we assume the user picks from a list we can fetch.
-            // IMPORTANT: Backend mapToResponse returns strings. I'll stick to what I have. 
-            // If the user wants to swap, they click "Select Car". 
-            // We will Try to fetch cars. If we lack HubID, we might fail.
-            // Let's try to fetch cars using placeholder if needed or skip if we can't.
+            if (data.bookingStatus === 'COMPLETED') {
+                setMessage({ type: 'info', text: 'This booking is already completed and closed.' });
+                setLoading(false);
+                return;
+            }
+            if (data.bookingStatus === 'CANCELLED') {
+                setMessage({ type: 'danger', text: 'This booking has been cancelled.' });
+                setLoading(false);
+                return;
+            }
 
             setShowModal(true);
         } catch (err) {
@@ -105,10 +99,18 @@ const StaffDashboard = () => {
     const handleReturn = async () => {
         if (!bookingId) return;
         setLoading(true);
+        setMessage({ type: '', text: '' });
         try {
             // First fetch booking to show details in modal
             const data = await ApiService.getBooking(bookingId);
             setBookingDetails(data);
+
+            if (data.bookingStatus !== 'ACTIVE') {
+                setMessage({ type: 'warning', text: `This booking is ${data.bookingStatus}. Only ACTIVE bookings can be returned.` });
+                setLoading(false);
+                return;
+            }
+
             setActiveTab('return'); // Ensure we are in return tab context
             setShowModal(true);
         } catch (err) {
@@ -251,7 +253,7 @@ const StaffDashboard = () => {
                                     <div className="mb-4">
                                         <label className="form-label fw-bold">Vehicle</label>
                                         <div className="input-group">
-                                            <input type="text" className="form-control" value={selectedCar ? selectedCar.carModel : (bookingDetails?.carName || '')} readOnly />
+                                            <input type="text" className="form-control" value={selectedCar ? selectedCar.carName : (bookingDetails?.carName || '')} readOnly />
                                             <button className="btn btn-outline-secondary" onClick={handleLoadCars}>Select / Change Car</button>
                                         </div>
                                     </div>
@@ -302,7 +304,7 @@ const StaffDashboard = () => {
                                                     className={`list-group-item list-group-item-action ${selectedCar?.carId === car.carId ? 'active' : ''}`}
                                                     onClick={() => { setSelectedCar(car); setShowCarSelection(false); }}>
                                                     <div className="d-flex w-100 justify-content-between">
-                                                        <h6 className="mb-1">{car.carModel} ({car.numberPlate})</h6>
+                                                        <h6 className="mb-1">{car.carName} ({car.numberPlate})</h6>
                                                         <small>{car.carType?.carTypeName}</small>
                                                     </div>
                                                 </button>

@@ -49,18 +49,18 @@ const MyBookings = () => {
     };
 
     const calculateTotal = (booking) => {
-        if (booking.totalAmount || booking.totalCost) return booking.totalAmount || booking.totalCost;
-        if (!booking.startDate || !booking.endDate) return booking.dailyRate || 'Calculated';
+        if (booking.totalAmount) return booking.totalAmount.toLocaleString();
 
+        // Fallback for manual calculation if not in backend response (unlikely now)
         try {
             const start = new Date(booking.startDate);
             const end = new Date(booking.endDate);
             const diffTime = Math.abs(end - start);
             const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
             const rate = booking.dailyRate || 2500;
-            return (diffDays * rate);
+            return (diffDays * rate).toLocaleString();
         } catch (e) {
-            return booking.dailyRate || 'Calculated';
+            return (booking.dailyRate || 2500).toLocaleString();
         }
     };
 

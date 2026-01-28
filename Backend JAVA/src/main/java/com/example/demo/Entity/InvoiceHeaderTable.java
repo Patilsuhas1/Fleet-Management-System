@@ -50,6 +50,4 @@ public class InvoiceHeaderTable {
     @Column(name = "rate")
     private String rate;
 
-    
 }
-
