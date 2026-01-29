@@ -1,0 +1,10 @@
+# Backend
+target/
+bin/
+
+# Frontend
+node_modules/
+build/
+
+# IDE
+.vscode/
