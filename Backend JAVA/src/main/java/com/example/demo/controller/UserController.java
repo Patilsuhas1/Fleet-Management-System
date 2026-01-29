@@ -41,12 +41,13 @@ public class UserController {
 
 	@PostMapping("/register")
 	public ResponseEntity<User> register(@RequestBody User user) {
+		// Enforce CUSTOMER role for public registration
+		user.setRole(com.example.demo.Entity.Role.CUSTOMER);
 		User user2 = userService.addUser(user);
 		if (user2 == null) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
-
 	}
 
 	@PostMapping(value = "/login")
@@ -72,7 +73,8 @@ public class UserController {
 					response.put("hubId", fullUser.getHub().getHubId());
 				}
 
-				com.example.demo.Entity.CustomerMaster customer = customerRepository.findByEmail(fullUser.getEmail());
+				com.example.demo.Entity.CustomerMaster customer = customerRepository
+						.findByEmailIgnoreCase(fullUser.getEmail());
 				if (customer != null) {
 					response.put("customerId", customer.getCustId());
 				} else {
@@ -126,14 +128,15 @@ public class UserController {
 		}
 	}
 
+	@Autowired
+	private com.example.demo.Service.EmailService emailService;
+
 	@PostMapping("/forgot-password")
 	public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
 		String email = request.get("email");
 		String token = userService.generateResetToken(email);
 		if (token != null) {
-			// Mock sending email
-			logger.info("Password reset token for {}: {}", email, token);
-			return ResponseEntity.ok("If an account exists with this email, you will receive a reset link shortly.");
+			emailService.sendPasswordResetEmail(email, token);
 		}
 		// Always return OK for security reasons even if email is not found
 		return ResponseEntity.ok("If an account exists with this email, you will receive a reset link shortly.");

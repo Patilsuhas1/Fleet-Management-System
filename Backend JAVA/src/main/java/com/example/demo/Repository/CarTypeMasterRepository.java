@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CarTypeMasterRepository
-        extends JpaRepository<CarTypeMaster, Long> {
+                extends JpaRepository<CarTypeMaster, Long> {
+        java.util.Optional<CarTypeMaster> findByCarTypeName(String carTypeName);
 }
-

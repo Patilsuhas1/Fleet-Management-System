@@ -106,18 +106,32 @@ const Booking = () => {
     // Get current user session
     const currentUser = React.useMemo(() => AuthService.getCurrentUser(), []);
 
-    // Pre-fill email from logged-in user (Run only once on mount/user change)
+    // Pre-fill email and auto-fetch data from logged-in user
     useEffect(() => {
-        if (currentUser && (currentUser.email || currentUser.username)) {
-            setCustomer(prev => {
-                // Only pre-fill if email is currently empty
-                if (!prev.email) {
-                    return { ...prev, email: currentUser.email || currentUser.username };
+        const prefillData = async () => {
+            if (currentUser && (currentUser.email || currentUser.username)) {
+                const userEmail = currentUser.email || currentUser.username;
+
+                // Set email initially
+                setCustomer(prev => ({ ...prev, email: userEmail }));
+
+                try {
+                    setLoading(true);
+                    const data = await ApiService.findCustomer(userEmail);
+                    if (data) {
+                        setCustomer(prev => ({ ...prev, ...data }));
+                        console.log('Member data auto-filled for:', userEmail);
+                    }
+                } catch (err) {
+                    console.error("Auto-fill failed", err);
+                } finally {
+                    setLoading(false);
                 }
-                return prev;
-            });
-        }
-    }, [currentUser]); // Remove customer.email dependency to prevent snap-back
+            }
+        };
+
+        prefillData();
+    }, [currentUser]);
 
     const loadStates = async () => {
         try {
@@ -230,44 +244,6 @@ const Booking = () => {
         );
     };
 
-    const handleFindCustomer = async () => {
-        if (!customer.email) {
-            alert('Please enter an email to search.');
-            return;
-        }
-
-        // Restriction Logic
-        if (!currentUser) {
-            alert('Guest users cannot search for member details. Please fill in the details manually.');
-            return;
-        }
-
-        if (currentUser.role === 'CUSTOMER') {
-            const loggedInEmail = currentUser.email || currentUser.username;
-            if (customer.email.toLowerCase() !== loggedInEmail.toLowerCase()) {
-                alert('You can only retrieve details for your own registered email: ' + loggedInEmail);
-                return;
-            }
-        }
-
-        try {
-            setLoading(true);
-            const data = await ApiService.findCustomer(customer.email);
-            if (data) {
-                setCustomer(prev => ({ ...prev, ...data }));
-                alert('Member found! Details auto-filled.');
-            }
-        } catch (err) {
-            if (err.response && err.response.status === 404) {
-                alert('Member not found. Please fill in details.');
-            } else {
-                console.error(err);
-                alert('Error fetching member details.');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSaveCustomer = async (e) => {
         e.preventDefault();
@@ -526,31 +502,23 @@ const Booking = () => {
                         <div className="premium-card p-5">
                             <h4 className="fw-bold mb-4">Customer Details</h4>
 
-                            {/* Membership Login */}
-                            <div className="input-group mb-5 glass-effect rounded-pill p-1">
-                                <input
-                                    type="email"
-                                    className="form-control bg-transparent border-0 px-4"
-                                    placeholder="Enter Email to Retrieve Details"
-                                    value={customer.email}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        setCustomer(prev => ({ ...prev, email: val }));
-                                    }}
-                                    onKeyDown={e => e.key === 'Enter' && handleFindCustomer()}
-                                />
-                                <button
-                                    className="btn btn-premium rounded-pill px-4"
-                                    type="button"
-                                    onClick={handleFindCustomer}
-                                    title={!currentUser ? "Login to retrieve your details" : "Fetch registered member details"}
-                                >
-                                    Find Member
-                                </button>
-                            </div>
 
                             <form onSubmit={handleSaveCustomer}>
                                 <div className="row g-4">
+                                    <div className="col-md-12">
+                                        <label className="form-label text-muted small">Email Address</label>
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            value={customer.email || ''}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setCustomer(prev => ({ ...prev, email: val }));
+                                            }}
+                                            required
+                                            readOnly={!!currentUser}
+                                        />
+                                    </div>
                                     <div className="col-md-6">
                                         <label className="form-label text-muted small">First Name</label>
                                         <input

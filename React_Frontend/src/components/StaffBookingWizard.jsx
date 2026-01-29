@@ -81,14 +81,15 @@ const StaffBookingWizard = ({ onClose }) => {
                 setIsNewCustomer(false);
             } else {
                 setCustomerDetails(null);
-                setIsNewCustomer(true); // Prompt to register
+                setIsNewCustomer(true);
                 setNewCustomerData({ ...newCustomerData, email: customerEmail });
+                alert('Member not found. Proceeding with registration.');
             }
         } catch (err) {
-            // If 404, valid to create new
             setCustomerDetails(null);
             setIsNewCustomer(true);
             setNewCustomerData({ ...newCustomerData, email: customerEmail });
+            alert('Error occurred or Member not found. Proceeding with registration.');
         } finally {
             setLoading(false);
         }
@@ -257,15 +258,21 @@ const StaffBookingWizard = ({ onClose }) => {
                     <div className="py-2">
                         {!customerDetails && !isNewCustomer ? (
                             <div className="text-center py-4">
-                                <label className="form-label text-muted small uppercase mb-3">Lookup Existing Member</label>
-                                <div className="input-group glass-effect rounded-pill p-1 border">
-                                    <input type="email" className="form-control bg-transparent border-0 px-4" placeholder="renter@example.com"
-                                        value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} />
-                                    <button className="btn btn-premium rounded-pill px-4" onClick={handleFindCustomer} disabled={loading}>Search</button>
+                                <label className="form-label text-muted small uppercase mb-3">Customer Email</label>
+                                <div className="glass-effect rounded-pill p-1 border">
+                                    <input
+                                        type="email"
+                                        className="form-control bg-transparent border-0 px-4 py-2"
+                                        placeholder="customer@example.com"
+                                        value={customerEmail}
+                                        onChange={e => setCustomerEmail(e.target.value)}
+                                        onBlur={handleFindCustomer}
+                                        onKeyDown={e => e.key === 'Enter' && handleFindCustomer()}
+                                    />
                                 </div>
                                 <div className="mt-4">
-                                    <span className="text-muted small">New Customer? </span>
-                                    <button className="btn btn-link text-primary text-decoration-none p-0" onClick={() => setIsNewCustomer(true)}>Register Manually</button>
+                                    <span className="text-muted small">Customer not found? </span>
+                                    <button className="btn btn-link text-primary text-decoration-none p-0" onClick={() => setIsNewCustomer(true)}>Register New Customer</button>
                                 </div>
                             </div>
                         ) : (

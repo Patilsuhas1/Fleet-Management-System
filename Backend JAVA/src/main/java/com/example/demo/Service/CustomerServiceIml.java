@@ -20,7 +20,9 @@ public class CustomerServiceIml implements CustomerService {
 
     @Override
     public CustomerMaster findByEmail(String email) {
-        return customerRepository.findByEmail(email);
+        if (email == null)
+            return null;
+        return customerRepository.findByEmailIgnoreCase(email.trim());
     }
 
     @Override
@@ -30,7 +32,7 @@ public class CustomerServiceIml implements CustomerService {
 
     @Override
     public CustomerMaster saveOrUpdateCustomer(CustomerMaster customer) {
-        CustomerMaster existing = customerRepository.findByEmail(customer.getEmail());
+        CustomerMaster existing = customerRepository.findByEmailIgnoreCase(customer.getEmail().trim());
         if (existing != null) {
             // Update existing customer details
             customer.setCustId(existing.getCustId()); // Preserve ID
@@ -43,4 +45,3 @@ public class CustomerServiceIml implements CustomerService {
     }
 
 }
-

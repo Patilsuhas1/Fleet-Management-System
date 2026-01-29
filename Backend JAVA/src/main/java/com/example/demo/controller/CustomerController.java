@@ -62,7 +62,7 @@ public class CustomerController {
         if (customer != null) {
             return ResponseEntity.ok(customer);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.ok(null);
         }
     }
 
@@ -82,4 +82,3 @@ public class CustomerController {
     }
 
 }
-

@@ -144,13 +144,20 @@ public class ExcelUploadService {
                 }
 
                 try {
-                    CarTypeMaster type = new CarTypeMaster();
-
                     // Cell 0: Name, 1: Daily, 2: Weekly, 3: Monthly, 4: ImagePath
-
                     Cell nameCell = currentRow.getCell(0);
-                    if (nameCell != null)
-                        type.setCarTypeName(getCellValueAsString(nameCell));
+                    if (nameCell == null)
+                        continue;
+
+                    String typeName = getCellValueAsString(nameCell);
+                    if (typeName == null || typeName.trim().isEmpty())
+                        continue;
+
+                    // Save or Update logic: Check if exists
+                    Optional<CarTypeMaster> existingType = carTypeRepository.findByCarTypeName(typeName);
+                    CarTypeMaster type = existingType.orElse(new CarTypeMaster());
+
+                    type.setCarTypeName(typeName);
 
                     Cell dailyCell = currentRow.getCell(1);
                     if (dailyCell != null)
@@ -168,8 +175,7 @@ public class ExcelUploadService {
                     if (imgCell != null)
                         type.setImagePath(getCellValueAsString(imgCell));
 
-                    if (type.getCarTypeName() != null)
-                        types.add(type);
+                    types.add(type);
                 } catch (Exception e) {
                     System.err.println("Error parsing rates row " + rowNumber + ": " + e.getMessage());
                 }
@@ -192,4 +198,3 @@ public class ExcelUploadService {
         }
     }
 }
-

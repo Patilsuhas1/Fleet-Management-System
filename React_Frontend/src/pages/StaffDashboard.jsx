@@ -243,7 +243,7 @@ const StaffDashboard = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <p className="mb-1"><strong>Dates:</strong> {bookingDetails?.startDate} to {bookingDetails?.endDate}</p>
-                                        <p className="mb-1"><strong>Vehicle:</strong> {bookingDetails?.carName || 'Not Assigned'}</p>
+                                        <p className="mb-1"><strong>Vehicle:</strong> {selectedCar ? selectedCar.carName : <span className="text-danger fw-bold">Selection Required</span>}</p>
                                     </div>
                                 </div>
                             </div>
@@ -253,7 +253,7 @@ const StaffDashboard = () => {
                                     <div className="mb-4">
                                         <label className="form-label fw-bold">Vehicle</label>
                                         <div className="input-group">
-                                            <input type="text" className="form-control" value={selectedCar ? selectedCar.carName : (bookingDetails?.carName || '')} readOnly />
+                                            <input type="text" className={`form-control ${!selectedCar ? 'is-invalid' : 'is-valid'}`} value={selectedCar ? selectedCar.carName : ''} placeholder="Please select a vehicle..." readOnly />
                                             <button className="btn btn-outline-secondary" onClick={handleLoadCars}>Select / Change Car</button>
                                         </div>
                                     </div>
@@ -288,7 +288,7 @@ const StaffDashboard = () => {
                                         <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
                                         <button className={`btn px-4 ${activeTab === 'handover' ? 'btn-success' : 'btn-primary'}`}
                                             onClick={activeTab === 'handover' ? handleCompleteHandover : handleCompleteReturn}
-                                            disabled={loading}>
+                                            disabled={loading || (activeTab === 'handover' && !selectedCar)}>
                                             {loading ? 'Submitting...' : (activeTab === 'handover' ? 'Complete Handover' : 'Complete Return')}
                                         </button>
                                     </div>

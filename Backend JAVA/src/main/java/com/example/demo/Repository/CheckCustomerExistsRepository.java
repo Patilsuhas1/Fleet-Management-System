@@ -4,8 +4,6 @@ import com.example.demo.Entity.CustomerMaster;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
-
 public interface CheckCustomerExistsRepository extends JpaRepository<CustomerMaster, Integer> {
-    Optional<CustomerMaster> findByEmail(String email);
+    Optional<CustomerMaster> findByEmailIgnoreCase(String email);
 }
-

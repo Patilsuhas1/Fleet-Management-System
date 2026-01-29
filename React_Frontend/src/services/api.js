@@ -62,10 +62,19 @@ const ApiService = {
     uploadRates: (file) => {
         const formData = new FormData();
         formData.append('file', file);
-        return instance.post('/api/v1/rates/upload', formData, {
+        return instance.post('/api/admin/upload-rates', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
-    }
+    },
+
+    // Admin Dashboard
+    getAllBookings: () => instance.get('/api/admin/bookings').then(res => res.data),
+
+    // Staff Management (Admin)
+    getAdminStaff: () => instance.get('/api/admin/staff').then(res => res.data),
+    getAdminHubs: () => instance.get('/api/admin/hubs').then(res => res.data),
+    registerStaff: (userData) => instance.post('/api/admin/register-staff', userData).then(res => res.data),
+    deleteStaff: (id) => instance.delete(`/api/admin/staff/${id}`).then(res => res.data)
 };
 
 export default ApiService;

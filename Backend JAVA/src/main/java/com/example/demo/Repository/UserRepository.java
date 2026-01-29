@@ -13,4 +13,5 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
 	java.util.Optional<User> findByResetToken(String resetToken);
 
+	java.util.List<User> findByRole(com.example.demo.Entity.Role role);
 }

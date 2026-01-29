@@ -11,10 +11,10 @@ import CarSelection from './pages/CarSelection';
 import HubSelection from './pages/HubSelection';
 import StaffDashboard from './pages/StaffDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminBookings from './pages/AdminBookings';
+import StaffManagement from './pages/StaffManagement';
 import ManageBooking from './pages/ManageBooking';
 import CustomerCare from './pages/CustomerCare';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -50,8 +50,8 @@ function App() {
           <Route path="/staff/handover" element={<StaffDashboard />} />
           <Route path="/staff/return" element={<StaffDashboard />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/admin/bookings" element={<AdminBookings />} />
+          <Route path="/admin/staff" element={<StaffManagement />} />
         </Routes>
       </div>
     </Router>

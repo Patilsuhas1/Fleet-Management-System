@@ -40,9 +40,50 @@ public class AdminController {
     @Autowired
     private BookingService bookingService;
 
+    @Autowired
+    private com.example.demo.Repository.UserRepository userRepository;
+
+    @Autowired
+    private com.example.demo.Repository.HubRepository hubRepository;
+
+    @Autowired
+    private com.example.demo.Service.UserService userService;
+
     @GetMapping("/bookings")
     public ResponseEntity<List<BookingResponse>> getAllBookings() {
         return ResponseEntity.ok(bookingService.getAllBookings());
     }
-}
 
+    @PostMapping("/register-staff")
+    public ResponseEntity<?> registerStaff(@RequestBody com.example.demo.Entity.User user) {
+        try {
+            user.setRole(com.example.demo.Entity.Role.STAFF);
+            // Use the service to add user which handles password encoding
+            userService.addUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Staff registered successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Failed to register staff: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/staff")
+    public ResponseEntity<List<com.example.demo.Entity.User>> getAllStaff() {
+        return ResponseEntity.ok(userRepository.findByRole(com.example.demo.Entity.Role.STAFF));
+    }
+
+    @GetMapping("/hubs")
+    public ResponseEntity<List<com.example.demo.Entity.HubMaster>> getAllHubs() {
+        return ResponseEntity.ok(hubRepository.findAll());
+    }
+
+    @DeleteMapping("/staff/{id}")
+    public ResponseEntity<?> deleteStaff(@PathVariable int id) {
+        try {
+            userRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("message", "Staff removed successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Failed to remove staff"));
+        }
+    }
+}

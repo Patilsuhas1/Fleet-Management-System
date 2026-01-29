@@ -8,9 +8,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CustomerRepository extends JpaRepository<CustomerMaster, Integer> {
 
-    CustomerMaster findByEmail(String email);
+    CustomerMaster findByEmailIgnoreCase(String email);
 
     CustomerMaster findByMembershipId(String membershipId);
 
 }
-

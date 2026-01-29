@@ -124,19 +124,6 @@ const Register = () => {
                                     </div>
                                 </div>
 
-                                <div className="mb-4">
-                                    <label className="form-label text-muted small ps-2 mb-2">Account Type</label>
-                                    <select
-                                        className="form-select form-select-lg rounded-4 shadow-sm fs-6"
-                                        name="role"
-                                        value={formData.role}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="CUSTOMER">Customer</option>
-                                        <option value="STAFF">Staff</option>
-                                        <option value="ADMIN">Administrator</option>
-                                    </select>
-                                </div>
 
                                 <div className="form-check mb-4 px-1 ms-3">
                                     <input className="form-check-input" type="checkbox" id="terms" required />

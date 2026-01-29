@@ -15,18 +15,15 @@ public class CheckCustomerExistsService {
 
     public String createBooking(BookingDTO bookingDTO) {
 
-        Optional<CustomerMaster> checkCustomerExistsService = checkCustomerExists.findByEmail(bookingDTO.getEmail());
+        Optional<CustomerMaster> checkCustomerExistsService = checkCustomerExists
+                .findByEmailIgnoreCase(bookingDTO.getEmail().trim());
 
-        if(checkCustomerExistsService.isPresent()) {
+        if (checkCustomerExistsService.isPresent()) {
             CustomerMaster customerMaster = checkCustomerExistsService.get();
             return "You can continue with booking";
-        }
-        else {
+        } else {
             return "Please login before booking";
         }
 
-
-
     }
 }
-
