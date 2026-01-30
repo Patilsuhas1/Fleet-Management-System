@@ -60,11 +60,6 @@ const Home = () => {
                                 <Link to="/booking" className="btn btn-premium btn-lg">
                                     {t('home.bookNow')}
                                 </Link>
-                                {AuthService.getCurrentUser() && (
-                                    <Link to="/manage-booking" className="btn btn-outline-premium btn-lg">
-                                        {t('home.manageBooking')}
-                                    </Link>
-                                )}
                             </div>
                         </div>
                         <div className="col-lg-5 d-none d-lg-block">
