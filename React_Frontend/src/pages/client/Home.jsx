@@ -57,9 +57,12 @@ const Home = () => {
                                 {t('home.heroSub')}
                             </p>
                             <div className="d-flex gap-4 mt-2">
-                                {(!AuthService.getCurrentUser() || AuthService.getCurrentUser().role === 'CUSTOMER') && (
-                                    <Link to="/booking" className="btn btn-premium btn-lg">
-                                        {t('home.bookNow')}
+                                <Link to="/booking" className="btn btn-premium btn-lg">
+                                    {t('home.bookNow')}
+                                </Link>
+                                {AuthService.getCurrentUser() && (
+                                    <Link to="/manage-booking" className="btn btn-outline-premium btn-lg">
+                                        {t('home.manageBooking')}
                                     </Link>
                                 )}
                             </div>
