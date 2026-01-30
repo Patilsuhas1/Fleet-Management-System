@@ -1,5 +1,32 @@
 import React, { useState } from 'react';
 import ApiService from '../../services/api';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+    Calendar,
+    Car,
+    User,
+    CheckCircle2,
+    ArrowRight,
+    ArrowLeft,
+    IndianRupee,
+    Search,
+    ShieldCheck,
+    Plus,
+    Minus,
+    Zap,
+    MapPin,
+    Mail,
+    Phone,
+    CreditCard,
+    FileCheck,
+    Loader2,
+    X,
+    AlertCircle
+} from "lucide-react";
 
 const StaffBookingWizard = ({ onClose }) => {
     const [step, setStep] = useState(1);
@@ -7,10 +34,10 @@ const StaffBookingWizard = ({ onClose }) => {
     const [message, setMessage] = useState('');
 
     // Booking Data
-    const [pickupHubId] = useState(1); // Default to 1 for now, ideally logged-in staff hub
+    const [pickupHubId] = useState(1);
     const [dates, setDates] = useState({
         rentalDate: new Date().toISOString().slice(0, 16),
-        returnDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16) // Default 24h
+        returnDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
     });
 
     const [availableCars, setAvailableCars] = useState([]);
@@ -19,12 +46,11 @@ const StaffBookingWizard = ({ onClose }) => {
     const [selectedAddOns, setSelectedAddOns] = useState([]);
     const [childSeatQty, setChildSeatQty] = useState(1);
 
-    // Cost Calculation Helpers
+    // Cost Calculation
     const calculateRentalDays = () => {
         const start = new Date(dates.rentalDate);
         const end = new Date(dates.returnDate);
-        const diffTime = Math.abs(end - start);
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+        return Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) || 1;
     };
 
     const calculateTotalCost = () => {
@@ -51,16 +77,14 @@ const StaffBookingWizard = ({ onClose }) => {
         drivingLicenseNumber: '', idPassportNumber: ''
     });
 
-    // Step 1: Find Cars (Auto-triggered or Manual confirm of dates)
     const handleFindCars = async () => {
         setLoading(true);
         try {
-            // Backend expects LocalDate (YYYY-MM-DD), slice the datetime-local string
             const start = dates.rentalDate.slice(0, 10);
             const end = dates.returnDate.slice(0, 10);
             const cars = await ApiService.getAvailableCars(pickupHubId, start, end);
             setAvailableCars(cars);
-            const addonsData = await ApiService.getAddOns(); // Pre-fetch addons
+            const addonsData = await ApiService.getAddOns();
             setAddOns(addonsData);
             setStep(2);
         } catch (err) {
@@ -70,7 +94,6 @@ const StaffBookingWizard = ({ onClose }) => {
         }
     };
 
-    // Step 3: Find Customer
     const handleFindCustomer = async () => {
         if (!customerEmail) return;
         setLoading(true);
@@ -83,25 +106,20 @@ const StaffBookingWizard = ({ onClose }) => {
                 setCustomerDetails(null);
                 setIsNewCustomer(true);
                 setNewCustomerData({ ...newCustomerData, email: customerEmail });
-                alert('Member not found. Proceeding with registration.');
             }
         } catch (err) {
             setCustomerDetails(null);
             setIsNewCustomer(true);
             setNewCustomerData({ ...newCustomerData, email: customerEmail });
-            alert('Error occurred or Member not found. Proceeding with registration.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Step 4: Create Booking
     const handleCreateBooking = async () => {
         setLoading(true);
         try {
             let custId = customerDetails?.customerId;
-
-            // If new customer, save first
             if (isNewCustomer) {
                 const savedCust = await ApiService.saveCustomer(newCustomerData);
                 custId = savedCust.customerId;
@@ -110,43 +128,28 @@ const StaffBookingWizard = ({ onClose }) => {
             if (!custId) throw new Error("Invalid Customer ID");
 
             const bookingRequest = {
-                customerId: custId,
-                carId: selectedCar.carId,
-                pickupHubId: pickupHubId,
-                returnHubId: pickupHubId, // Return to same hub for on-spot
-                rentalDate: dates.rentalDate,
-                returnDate: dates.returnDate,
-                addOnIds: []
+                customerId: custId, carId: selectedCar.carId, pickupHubId, returnHubId: pickupHubId,
+                rentalDate: dates.rentalDate, returnDate: dates.returnDate, addOnIds: []
             };
 
-            // Process Add-ons with Quantity
             const finalAddOnIds = [...selectedAddOns];
             const childSeatAddOn = addOns.find(a => a.addOnName.toLowerCase().includes('child seat'));
             if (childSeatAddOn && selectedAddOns.includes(childSeatAddOn.addOnId)) {
                 const baseIds = selectedAddOns.filter(id => id !== childSeatAddOn.addOnId);
-                for (let i = 0; i < childSeatQty; i++) {
-                    baseIds.push(childSeatAddOn.addOnId);
-                }
+                for (let i = 0; i < childSeatQty; i++) baseIds.push(childSeatAddOn.addOnId);
                 bookingRequest.addOnIds = baseIds;
             } else {
                 bookingRequest.addOnIds = finalAddOnIds;
             }
 
             const booking = await ApiService.createBooking(bookingRequest);
-
-            // Auto-Handover
             await ApiService.handoverCar(booking.bookingId);
-            const handoverRequest = {
-                bookingId: booking.bookingId,
-                carId: selectedCar.carId,
-                fuelStatus: 'Full',
-                notes: 'On-Spot Booking - Auto Handover'
-            };
-            await ApiService.processHandover(handoverRequest);
+            await ApiService.processHandover({
+                bookingId: booking.bookingId, carId: selectedCar.carId, fuelStatus: 'Full', notes: 'Instant Reservation - Automated Handover'
+            });
 
-            alert(`Booking Created and Handed Over! Confirmation: ${booking.confirmationNumber}`);
-            onClose(); // Close wizard
-
+            alert(`Reservation Successful! Confirmation: ${booking.confirmationNumber}`);
+            onClose();
         } catch (err) {
             setMessage('Booking Failed: ' + (err.response?.data?.message || err.message));
         } finally {
@@ -155,177 +158,239 @@ const StaffBookingWizard = ({ onClose }) => {
     };
 
     return (
-        <div className="premium-card shadow-lg mb-4 border-primary border-opacity-25">
-            <div className="bg-primary bg-opacity-10 p-4 border-bottom border-light border-opacity-10 d-flex justify-content-between align-items-center">
-                <h5 className="mb-0 fw-bold">Instant Reservation (Step {step}/3)</h5>
-                <button className="btn btn-sm btn-link text-primary text-decoration-none fw-bold" onClick={onClose}>✕ Close</button>
+        <div className="space-y-8 max-w-4xl mx-auto text-left">
+            <div className="flex items-center justify-between">
+                <div>
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-black text-[10px] uppercase px-3 py-1 mb-2">
+                        Step {step} of 3
+                    </Badge>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Instant Reservation</h2>
+                </div>
+                <Button variant="ghost" size="icon" onClick={onClose} className="h-10 w-10"><X className="h-5 w-5" /></Button>
             </div>
-            <div className="p-4">
-                {message && <div className="alert alert-danger glass-effect border-0 rounded-4">{message}</div>}
 
-                {/* STEP 1: DATES & CAR SEARCH */}
-                {step === 1 && (
-                    <div className="py-3">
-                        <div className="row g-4 mb-4">
-                            <div className="col-md-6">
-                                <label className="form-label text-muted small uppercase">Pickup Date (Now)</label>
-                                <input type="datetime-local" className="form-control bg-white border rounded-3 py-3" value={dates.rentalDate}
-                                    onChange={(e) => setDates({ ...dates, rentalDate: e.target.value })} />
-                            </div>
-                            <div className="col-md-6">
-                                <label className="form-label text-muted small uppercase">Return Date</label>
-                                <input type="datetime-local" className="form-control bg-white border rounded-3 py-3" value={dates.returnDate}
-                                    onChange={(e) => setDates({ ...dates, returnDate: e.target.value })} />
-                            </div>
+            {message && (
+                <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl flex items-center gap-3 animate-in fade-in duration-300">
+                    <AlertCircle className="h-5 w-5" />
+                    <span className="font-bold text-xs">{message}</span>
+                </div>
+            )}
+
+            {/* STEP 1: DURATION */}
+            {step === 1 && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Pickup Date & Time</Label>
+                            <Input
+                                type="datetime-local"
+                                className="h-14 rounded-2xl bg-muted/50 border-none font-bold text-center"
+                                value={dates.rentalDate}
+                                onChange={(e) => setDates({ ...dates, rentalDate: e.target.value })}
+                            />
                         </div>
-                        <button className="btn btn-premium w-100 py-3 rounded-pill fs-5" onClick={handleFindCars} disabled={loading}>
-                            {loading ? 'Searching Fleet...' : 'Check Available Vehicles'}
-                        </button>
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Return Date & Time</Label>
+                            <Input
+                                type="datetime-local"
+                                className="h-14 rounded-2xl bg-muted/50 border-none font-bold text-center"
+                                value={dates.returnDate}
+                                onChange={(e) => setDates({ ...dates, returnDate: e.target.value })}
+                            />
+                        </div>
                     </div>
-                )}
+                    <Button onClick={handleFindCars} disabled={loading} className="w-full h-16 rounded-2xl bg-primary font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 gap-3">
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Car className="h-5 w-5" /> Check Available Cars</>}
+                    </Button>
+                </div>
+            )}
 
-                {/* STEP 2: SELECT CAR & ADDONS */}
-                {step === 2 && (
-                    <div>
-                        <h6 className="mb-3 uppercase small tracking-wider text-primary">Available Fleet</h6>
-                        <div className="list-group list-group-flush gap-2 mb-4" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            {/* STEP 2: CAR & ADDONS */}
+            {step === 2 && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase text-primary tracking-widest">Select Vehicle</Label>
+                        <div className="grid gap-3 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
                             {availableCars.map(car => (
-                                <button key={car.carId}
-                                    className={`list-group-item list-group-item-action rounded-4 border p-4 glass-effect mb-2 ${selectedCar?.carId === car.carId ? 'border-primary ring-1 animate-pulse' : ''}`}
-                                    onClick={() => setSelectedCar(car)}>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong className="d-block fs-5 text-dark">{car.carModel}</strong>
-                                            <span className="text-muted small">{car.carType?.carTypeName} • {car.numberPlate}</span>
+                                <div
+                                    key={car.carId}
+                                    onClick={() => setSelectedCar(car)}
+                                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex justify-between items-center group ${selectedCar?.carId === car.carId
+                                            ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
+                                            : 'border-border/50 bg-muted/20 hover:border-primary/30'
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center transition-colors ${selectedCar?.carId === car.carId ? 'bg-primary text-white' : 'bg-background text-muted-foreground'}`}>
+                                            <Car className="h-6 w-6" />
                                         </div>
-                                        <span className="h5 fw-bold text-primary mb-0">₹{car.carType?.dailyRate}</span>
+                                        <div>
+                                            <p className="font-black uppercase text-sm">{car.carModel}</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase">{car.carType?.carTypeName} • {car.numberPlate}</p>
+                                        </div>
                                     </div>
-                                </button>
+                                    <div className="text-right">
+                                        <p className="text-2xl font-black text-primary flex items-center gap-1"><IndianRupee className="h-4 w-4" />{car.carType?.dailyRate}</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase italic">Daily Rate</p>
+                                    </div>
+                                </div>
                             ))}
                         </div>
+                    </div>
 
-                        <h6 className="mb-3 uppercase small tracking-wider text-primary">Available Extras</h6>
-                        <div className="row g-3 mb-4">
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase text-primary tracking-widest">Available Extras</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {addOns.map(addon => {
-                                const isChildSeat = addon.addOnName.toLowerCase().includes('child seat');
                                 const isSelected = selectedAddOns.includes(addon.addOnId);
-
+                                const isChildSeat = addon.addOnName.toLowerCase().includes('child seat');
                                 return (
-                                    <div key={addon.addOnId} className="col-md-6">
-                                        <div className={`p-3 rounded-4 glass-effect border h-100 ${isSelected ? 'border-primary' : ''}`}>
-                                            <div className="d-flex align-items-center gap-3">
-                                                <input className="form-check-input" type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) setSelectedAddOns([...selectedAddOns, addon.addOnId]);
-                                                        else setSelectedAddOns(selectedAddOns.filter(id => id !== addon.addOnId));
-                                                    }}
-                                                />
-                                                <div className="w-100">
-                                                    <div className="d-flex justify-content-between">
-                                                        <span className="fw-bold">{addon.addOnName}</span>
-                                                        <span className="text-primary small">₹{addon.addonDailyRate || addon.addOnRate}</span>
-                                                    </div>
-
-                                                    {isChildSeat && isSelected && (
-                                                        <div className="mt-2 animate-fade-in">
-                                                            <select
-                                                                className="form-select form-select-sm rounded-pill w-auto border-primary"
-                                                                value={childSeatQty}
-                                                                onChange={(e) => setChildSeatQty(Number(e.target.value))}
-                                                            >
-                                                                {[1, 2, 3].map(n => <option key={n} value={n}>{n} Seats</option>)}
-                                                            </select>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                    <div
+                                        key={addon.addOnId}
+                                        className={`p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${isSelected ? 'border-primary/50 bg-primary/5' : 'border-border/50 bg-muted/10'
+                                            }`}
+                                    >
+                                        <div
+                                            onClick={() => {
+                                                if (isSelected) setSelectedAddOns(selectedAddOns.filter(id => id !== addon.addOnId));
+                                                else setSelectedAddOns([...selectedAddOns, addon.addOnId]);
+                                            }}
+                                            className={`h-6 w-6 rounded-md border-2 flex items-center justify-center cursor-pointer transition-all ${isSelected ? 'bg-primary border-primary text-white' : 'border-muted-foreground/30'}`}
+                                        >
+                                            {isSelected && <CheckCircle2 className="h-4 w-4" />}
+                                        </div>
+                                        <div className="flex-grow">
+                                            <div className="flex justify-between items-center">
+                                                <p className="font-bold text-sm uppercase">{addon.addOnName}</p>
+                                                <p className="text-primary font-black text-sm">₹{addon.addonDailyRate || addon.addOnRate}</p>
                                             </div>
+                                            {isChildSeat && isSelected && (
+                                                <div className="mt-2 flex items-center gap-4 animate-in slide-in-from-left-2 duration-300">
+                                                    <div className="flex items-center bg-background rounded-lg border border-primary/20 p-1">
+                                                        <Button variant="ghost" size="icon" onClick={() => setChildSeatQty(Math.max(1, childSeatQty - 1))} className="h-8 w-8 text-primary"><Minus className="h-3 w-3" /></Button>
+                                                        <span className="w-8 text-center font-black text-sm">{childSeatQty}</span>
+                                                        <Button variant="ghost" size="icon" onClick={() => setChildSeatQty(Math.min(3, childSeatQty + 1))} className="h-8 w-8 text-primary"><Plus className="h-3 w-3" /></Button>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Qty</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
-
-                        <div className="d-flex justify-content-between pt-3">
-                            <button className="btn btn-link text-muted text-decoration-none" onClick={() => setStep(1)}>← Back</button>
-                            <button className="btn btn-premium rounded-pill px-5" disabled={!selectedCar} onClick={() => setStep(3)}>Next: Renter Details</button>
-                        </div>
                     </div>
-                )}
 
-                {/* STEP 3: CUSTOMER & CONFIRM */}
-                {step === 3 && (
-                    <div className="py-2">
-                        {!customerDetails && !isNewCustomer ? (
-                            <div className="text-center py-4">
-                                <label className="form-label text-muted small uppercase mb-3">Customer Email</label>
-                                <div className="glass-effect rounded-pill p-1 border">
-                                    <input
-                                        type="email"
-                                        className="form-control bg-transparent border-0 px-4 py-2"
+                    <div className="flex justify-between pt-6">
+                        <Button variant="ghost" onClick={() => setStep(1)} className="font-black uppercase text-[10px] tracking-widest gap-2">
+                            <ArrowLeft className="h-3 w-3" /> Back to Dates
+                        </Button>
+                        <Button
+                            disabled={!selectedCar}
+                            onClick={() => setStep(3)}
+                            className="bg-primary px-8 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20 gap-3"
+                        >
+                            Next: Customer Details <ArrowRight className="h-3 w-3" />
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {/* STEP 3: CUSTOMER */}
+            {step === 3 && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {!customerDetails && !isNewCustomer ? (
+                        <div className="max-w-md mx-auto space-y-6 text-center py-12">
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block">Customer Email Authentication</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Input
+                                        className="h-16 pl-12 bg-muted/50 border-none rounded-2xl text-lg font-bold placeholder:text-muted-foreground"
                                         placeholder="customer@example.com"
                                         value={customerEmail}
                                         onChange={e => setCustomerEmail(e.target.value)}
-                                        onBlur={handleFindCustomer}
                                         onKeyDown={e => e.key === 'Enter' && handleFindCustomer()}
                                     />
                                 </div>
-                                <div className="mt-4">
-                                    <span className="text-muted small">Customer not found? </span>
-                                    <button className="btn btn-link text-primary text-decoration-none p-0" onClick={() => setIsNewCustomer(true)}>Register New Customer</button>
+                            </div>
+                            <Button onClick={handleFindCustomer} disabled={loading} className="w-full h-14 rounded-2xl bg-secondary text-secondary-foreground font-black uppercase tracking-widest text-[10px] gap-3">
+                                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Search className="h-4 w-4" /> Find Customer</>}
+                            </Button>
+                            <Button variant="ghost" onClick={() => setIsNewCustomer(true)} className="text-primary font-black uppercase text-[10px] tracking-widest">
+                                New Customer: Register Now
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="space-y-8">
+                            {isNewCustomer ? (
+                                <Card className="p-8 bg-muted/30 rounded-3xl border border-border/50 relative overflow-hidden">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <Plus className="h-5 w-5 text-primary" />
+                                        <h3 className="text-lg font-black uppercase tracking-tight">New Customer Registration</h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-muted-foreground">First Name</Label>
+                                            <Input placeholder="First Name" className="h-12 border-none bg-background/50 font-bold" onChange={e => setNewCustomerData({ ...newCustomerData, firstName: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-muted-foreground">Last Name</Label>
+                                            <Input placeholder="Last Name" className="h-12 border-none bg-background/50 font-bold" onChange={e => setNewCustomerData({ ...newCustomerData, lastName: e.target.value })} />
+                                        </div>
+                                        <div className="md:col-span-2 space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-muted-foreground">Address</Label>
+                                            <Input placeholder="Current Address" className="h-12 border-none bg-background/50 font-bold" onChange={e => setNewCustomerData({ ...newCustomerData, address: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-muted-foreground">DL Number</Label>
+                                            <Input placeholder="Driving License #" className="h-12 border-none bg-background/50 font-bold" onChange={e => setNewCustomerData({ ...newCustomerData, drivingLicenseNumber: e.target.value })} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] font-black uppercase text-muted-foreground">Mobile Number</Label>
+                                            <Input placeholder="Phone Number" className="h-12 border-none bg-background/50 font-bold" onChange={e => setNewCustomerData({ ...newCustomerData, mobileNumber: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <ShieldCheck className="absolute -right-8 -bottom-8 h-48 w-48 text-primary/5 pointer-events-none" />
+                                </Card>
+                            ) : (
+                                <div className="p-8 bg-emerald-500/5 rounded-3xl border border-emerald-500/20 flex items-center gap-6 animate-in zoom-in-95 duration-500">
+                                    <div className="h-20 w-20 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                        <User className="h-10 w-10" />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-black uppercase tracking-tight text-emerald-600">{customerDetails.firstName} {customerDetails.lastName}</p>
+                                        <div className="flex items-center gap-4 mt-1">
+                                            <Badge className="bg-emerald-500 text-white border-none font-black text-[9px] uppercase tracking-widest">VERIFIED MEMBER</Badge>
+                                            <span className="text-xs font-bold text-muted-foreground italic">{customerDetails.email}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-6 bg-muted/20 p-8 rounded-3xl border border-border/50">
+                                <div className="text-center md:text-left">
+                                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-1">Estimated Total</p>
+                                    <p className="text-4xl font-black text-primary flex items-center gap-2">
+                                        <IndianRupee className="h-6 w-6" />
+                                        {calculateTotalCost().toLocaleString()}
+                                    </p>
+                                </div>
+                                <div className="flex gap-4 w-full md:w-auto">
+                                    <Button variant="ghost" onClick={() => setStep(2)} className="h-16 px-6 font-black uppercase text-[10px] tracking-widest">← Back</Button>
+                                    <Button
+                                        className="flex-grow md:flex-none h-16 px-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 font-black uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-500/20 gap-3"
+                                        disabled={loading || (!customerDetails && !isNewCustomer && !newCustomerData.firstName)}
+                                        onClick={handleCreateBooking}
+                                    >
+                                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileCheck className="h-5 w-5" /> Confirm & Handover</>}
+                                    </Button>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="mb-4">
-                                <h6 className="mb-3 uppercase small tracking-wider text-primary">Renter Information</h6>
-                                {isNewCustomer ? (
-                                    <div className="row g-3 glass-effect p-4 rounded-4 border">
-                                        <div className="col-6">
-                                            <label className="small text-muted mb-1">First Name</label>
-                                            <input className="form-control bg-white border" placeholder="First Name" onChange={e => setNewCustomerData({ ...newCustomerData, firstName: e.target.value })} />
-                                        </div>
-                                        <div className="col-6">
-                                            <label className="small text-muted mb-1">Last Name</label>
-                                            <input className="form-control bg-white border" placeholder="Last Name" onChange={e => setNewCustomerData({ ...newCustomerData, lastName: e.target.value })} />
-                                        </div>
-                                        <div className="col-12">
-                                            <label className="small text-muted mb-1">Permanent Address</label>
-                                            <input className="form-control bg-white border" placeholder="Address" onChange={e => setNewCustomerData({ ...newCustomerData, address: e.target.value })} />
-                                        </div>
-                                        <div className="col-6">
-                                            <label className="small text-muted mb-1">DL Number</label>
-                                            <input className="form-control bg-white border" placeholder="DL Number" onChange={e => setNewCustomerData({ ...newCustomerData, drivingLicenseNumber: e.target.value })} />
-                                        </div>
-                                        <div className="col-6">
-                                            <label className="small text-muted mb-1">Mobile</label>
-                                            <input className="form-control bg-white border" placeholder="Phone" onChange={e => setNewCustomerData({ ...newCustomerData, mobileNumber: e.target.value })} />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="glass-effect p-4 rounded-4 border-success border-opacity-25 d-flex align-items-center">
-                                        <div className="bg-success bg-opacity-10 rounded-circle p-3 me-4">
-                                            <i className="bi bi-person-check-fill text-success fs-3"></i>
-                                        </div>
-                                        <div>
-                                            <strong className="fs-5 d-block text-dark">{customerDetails.firstName} {customerDetails.lastName}</strong>
-                                            <span className="text-muted small">{customerDetails.email} • Verified Member</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="d-flex justify-content-between mt-4">
-                            <button className="btn btn-link text-muted text-decoration-none" onClick={() => setStep(2)}>← Back</button>
-                            <button className="btn btn-premium rounded-pill px-5 py-3 fw-bold"
-                                disabled={loading || (!customerDetails && !isNewCustomer && !newCustomerData.firstName)}
-                                onClick={handleCreateBooking}>
-                                {loading ? 'Finalizing...' : `Confirm & Handover (₹${calculateTotalCost().toLocaleString()})`}
-                            </button>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

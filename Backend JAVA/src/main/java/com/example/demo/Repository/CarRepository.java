@@ -24,15 +24,17 @@ public interface CarRepository extends JpaRepository<CarMaster, Integer> {
 
         @Query(value = "SELECT * FROM car_master c " +
                         "WHERE c.hub_id = :hubId " +
-                        "AND c.is_available = 'Y' " +
+                        "AND (c.is_available = 'Y' OR c.is_available = 'YES') " +
+                        "AND (:carTypeId IS NULL OR c.cartype_id = :carTypeId) " +
                         "AND c.car_id NOT IN (" +
                         "    SELECT b.car_id FROM booking_header_table b " +
                         "    WHERE b.booking_status != 'CANCELLED' " +
+                        "    AND b.car_id IS NOT NULL " +
                         "    AND NOT (b.end_date < :startDate OR b.start_date > :endDate)" +
                         ")", nativeQuery = true)
         List<CarMaster> findAvailableCars(@Param("hubId") int hubId,
                         @Param("startDate") java.time.LocalDate startDate,
-                        @Param("endDate") java.time.LocalDate endDate);
+                        @Param("endDate") java.time.LocalDate endDate,
+                        @Param("carTypeId") Long carTypeId);
 
 }
-

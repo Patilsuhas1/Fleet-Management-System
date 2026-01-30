@@ -2,6 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ApiService from '../../services/api';
 import AuthService from '../../services/authService';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+    CarFront,
+    CalendarDays,
+    MapPin,
+    ShieldCheck,
+    User,
+    PlusCircle,
+    ChevronLeft,
+    CheckCircle2,
+    Loader2
+} from "lucide-react";
 
 const Booking = () => {
     const navigate = useNavigate();
@@ -385,464 +402,605 @@ const Booking = () => {
     };
 
     return (
-        <div className="container py-5">
-            <h2 className="mb-4 fw-bold">Book Your Ride</h2>
+        <div className="container mx-auto px-4 py-12 max-w-7xl">
+            <div className="mb-10 text-center md:text-left">
+                <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Book Your Ride</h2>
+                <p className="text-muted-foreground">Follow the steps to secure your premium vehicle.</p>
+            </div>
 
-            <div className="d-flex justify-content-between mb-5 px-lg-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-12 px-2 md:px-10">
                 {[1, 2, 3, 4].map(i => (
-                    <div key={i} className={`d-flex align-items-center gap-2 ${step >= i ? 'text-primary' : 'text-muted'}`}>
-                        <div className={`rounded-circle d-flex align-items-center justify-content-center fw-bold ${step >= i ? 'bg-primary text-white' : 'bg-secondary bg-opacity-25'}`} style={{ width: '32px', height: '32px' }}>{i}</div>
-                        <span className="fw-600 d-none d-md-inline">{['Location', 'Vehicles', 'Add-ons', 'Confirm'][i - 1]}</span>
+                    <div key={i} className={`flex items-center gap-3 transition-colors ${step >= i ? 'text-primary' : 'text-muted-foreground'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${step >= i
+                            ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20'
+                            : 'bg-muted border-muted text-muted-foreground'
+                            }`}>
+                            {i}
+                        </div>
+                        <span className="font-semibold hidden sm:inline text-sm uppercase tracking-wider">
+                            {['Location', 'Vehicles', 'Details', 'Confirm'][i - 1]}
+                        </span>
+                        {i < 4 && <div className={`hidden lg:block w-12 h-[2px] mx-2 ${step > i ? 'bg-primary' : 'bg-muted'}`} />}
                     </div>
                 ))}
             </div>
 
-            {/* Step 1: Location & Date (Unchanged Logic, just re-render) */}
-            {/* Step 1: Location & Date (Refactored to MakeReservation style) */}
+            {/* Step 1: Location & Date */}
             {step === 1 && (
-                <div className="row g-4">
-                    {/* Left Panel */}
-                    <div className="col-md-6">
-                        <div className="premium-card p-5 h-100">
-                            <h3 className="mb-4">Search Availability</h3>
+                <div className="grid lg:grid-cols-2 gap-8 items-stretch">
+                    {/* Left Panel - Search */}
+                    <Card className="border-none shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
+                        <div className="p-8">
+                            <h3 className="text-2xl font-bold mb-6">Search Availability</h3>
 
                             {/* Dates */}
-                            <div className="row g-3 mb-4">
-                                <div className="col-md-6">
-                                    <label className="form-label text-muted small uppercase">Pick-Up Date</label>
-                                    <input
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pick-Up Date</Label>
+                                    <Input
                                         type="date"
-                                        className="form-control"
                                         min={new Date().toISOString().split('T')[0]}
+                                        value={dates.startDate}
                                         onChange={e => setDates({ ...dates, startDate: e.target.value })}
-                                        required
+                                        className="h-12"
                                     />
                                 </div>
-                                <div className="col-md-6">
-                                    <label className="form-label text-muted small uppercase">Return Date</label>
-                                    <input
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Return Date</Label>
+                                    <Input
                                         type="date"
-                                        className="form-control"
                                         min={dates.startDate || new Date().toISOString().split('T')[0]}
+                                        value={dates.endDate}
                                         onChange={e => setDates({ ...dates, endDate: e.target.value })}
-                                        required
+                                        className="h-12"
                                     />
                                 </div>
                             </div>
 
-                            <hr />
+                            <Separator className="my-8 opacity-50" />
 
-                            {/* Airport Section */}
-                            <h5 className="mt-3">Pick-Up Location</h5>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Enter Airport Code</label>
-                                <div className="input-group">
+                            {/* Location Section */}
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-bold">Pick-Up Location (Airport Code)</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            placeholder="e.g. BOM, PNQ"
+                                            value={airportCode}
+                                            onChange={e => setAirportCode(e.target.value.toUpperCase())}
+                                            className="uppercase h-12"
+                                        />
+                                        <Button
+                                            variant="outline"
+                                            onClick={searchByAirport}
+                                            disabled={loading}
+                                            className="px-6 h-12 font-bold"
+                                        >
+                                            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Find'}
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="relative py-4">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-background px-4 font-bold text-muted-foreground">Or select manually</span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold">State</Label>
+                                        <select
+                                            className="flex h-12 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                            onChange={handleStateChange}
+                                        >
+                                            <option value="">--Select State--</option>
+                                            {states.map(s => <option key={s.stateId} value={s.stateId}>{s.stateName}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm font-bold">City</Label>
+                                        <select
+                                            className="flex h-12 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
+                                            onChange={handleCityChange}
+                                            disabled={!selectedState || cities.length === 0}
+                                        >
+                                            <option value="">--Select City--</option>
+                                            {cities.map(c => <option key={c.cityId} value={c.cityId}>{c.cityName}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center space-x-3 pt-4">
                                     <input
-                                        type="text"
-                                        className="form-control"
-                                        value={airportCode}
-                                        onChange={e => setAirportCode(e.target.value.toUpperCase())}
-                                        placeholder="e.g. BOM"
+                                        type="checkbox"
+                                        id="differentReturn"
+                                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        checked={differentReturn}
+                                        onChange={() => setDifferentReturn(!differentReturn)}
                                     />
-                                    <button className="btn btn-outline-primary" type="button" onClick={searchByAirport} disabled={loading}>
-                                        {loading ? '...' : 'Find Airport'}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="text-center fw-bold my-2">OR</div>
-
-                            {/* City Section */}
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">Enter State</label>
-                                <select className="form-select" onChange={handleStateChange}>
-                                    <option value="">--Select State--</option>
-                                    {states.map(s => <option key={s.stateId} value={s.stateId}>{s.stateName}</option>)}
-                                </select>
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label fw-bold">City</label>
-                                <select className="form-select" onChange={handleCityChange} disabled={!selectedCity && cities.length === 0}>
-                                    <option value="">--Select City--</option>
-                                    {cities.map(c => <option key={c.cityId} value={c.cityId}>{c.cityName}</option>)}
-                                </select>
-                            </div>
-
-                            {/* Return Checkbox */}
-                            <div className="form-check mb-4">
-                                <input
-                                    className="form-check-input"
-                                    type="checkbox"
-                                    checked={differentReturn}
-                                    onChange={() => setDifferentReturn(!differentReturn)}
-                                />
-                                <label className="form-check-label">
-                                    I may return the car to different location
-                                </label>
-                            </div>
-
-                            <button className="btn btn-primary w-100 py-2 fs-5" onClick={searchByCity}>
-                                Continue Booking
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Right Panel - Hyper-Premium Live Ad */}
-                    <div className="col-md-6">
-                        <div className="premium-card h-100 p-0 overflow-hidden shadow-premium border-0 position-relative mesh-gradient">
-                            {/* Reflective Overlay */}
-                            <div className="position-absolute top-0 start-0 w-100 h-100" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)' }}></div>
-
-                            <div className="position-relative z-1 p-5 h-100 d-flex flex-column justify-content-center text-center">
-                                <div className="floating-element mb-5">
-                                    <div className="d-inline-block position-relative">
-                                        <div className="position-absolute top-50 start-50 translate-middle w-100 h-100 blur-3xl opacity-30 bg-primary rounded-circle"></div>
-                                        <i className="bi bi-car-front-fill text-white display-1 shine-text"></i>
-                                    </div>
+                                    <Label htmlFor="differentReturn" className="text-sm font-medium cursor-pointer">
+                                        I may return the car to a different location
+                                    </Label>
                                 </div>
 
-                                <div className="glass-card-premium p-4 rounded-5 mb-4 border-0 animate-fade-in">
-                                    <span className="badge ad-badge rounded-pill px-4 py-2 mb-3">Priority Access</span>
-                                    <h2 className="fw-extrabold display-4 mb-3 text-white">Luxury <span className="text-primary">Fleet</span></h2>
-                                    <p className="fs-5 text-white opacity-75 mb-4">Experience the pinnacle of automotive engineering with our premium selection.</p>
-
-                                    <div className="row g-3">
-                                        <div className="col-6">
-                                            <div className="p-3 bg-white bg-opacity-10 rounded-4">
-                                                <span className="d-block small text-white opacity-50">Weekend Rate</span>
-                                                <span className="fw-bold text-white fs-5">₹1,999<small className="opacity-50">/day</small></span>
-                                            </div>
-                                        </div>
-                                        <div className="col-6">
-                                            <div className="p-3 bg-white bg-opacity-10 rounded-4">
-                                                <span className="d-block small text-white opacity-50">Insurance</span>
-                                                <span className="fw-bold text-white fs-5">Included</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button className="btn btn-ad-action btn-lg rounded-pill px-5 py-3 shadow-lg mt-3 fw-black">
-                                    BOOK THE EXPERIENCE
-                                </button>
+                                <Button className="w-full h-14 text-lg font-bold mt-6 shadow-lg shadow-primary/20" onClick={searchByCity}>
+                                    Find Cars
+                                </Button>
                             </div>
                         </div>
-                    </div>
+                    </Card>
+
+                    {/* Right Panel - Promo */}
+                    <Card className="border-none overflow-hidden relative group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-blue-900 z-10 opacity-95 transition-transform duration-700 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80')] bg-cover bg-center" />
+
+                        <div className="relative z-20 h-full p-10 flex flex-col justify-center text-white text-center">
+                            <div className="mb-8 flex justify-center">
+                                <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl animate-bounce">
+                                    <CarFront className="w-16 h-16 text-white" />
+                                </div>
+                            </div>
+
+                            <Badge className="w-fit mx-auto mb-6 bg-white/20 text-white border-white/30 px-6 py-1.5 text-sm font-bold rounded-full backdrop-blur-md">
+                                Priority Access
+                            </Badge>
+
+                            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+                                Luxury <span className="text-blue-400">Fleet</span>
+                            </h2>
+
+                            <p className="text-xl text-white/80 mb-10 max-w-md mx-auto leading-relaxed">
+                                Experience the pinnacle of automotive engineering with our premium selection.
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+                                <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 transition-all hover:bg-white/20">
+                                    <span className="block text-xs uppercase tracking-widest text-white/60 mb-2">Weekend Rate</span>
+                                    <span className="text-2xl font-bold">₹1,999<small className="text-sm text-white/50">/day</small></span>
+                                </div>
+                                <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 transition-all hover:bg-white/20">
+                                    <span className="block text-xs uppercase tracking-widest text-white/60 mb-2">Insurance</span>
+                                    <span className="text-2xl font-bold">Full Cover</span>
+                                </div>
+                            </div>
+
+                            <Button variant="outline" className="mt-12 w-full h-14 rounded-full border-2 text-primary border-white bg-white hover:bg-white/90 font-black text-lg">
+                                VIEW CATALOG
+                            </Button>
+                        </div>
+                    </Card>
                 </div>
             )}
 
             {/* Step 2 is now handled by CarSelection.js page */}
 
             {step === 3 && (
-                <div className="row">
+                <div className="grid lg:grid-cols-3 gap-8 items-start">
                     {/* Add-ons Column */}
-                    <div className="col-md-4 mb-4">
-                        <div className="premium-card p-4 h-100 shadow-sm">
-                            <h4 className="fw-bold mb-4">Available Extras</h4>
-                            {addOns.length > 0 ? (
-                                <div className="list-group list-group-flush gap-3 bg-transparent">
-                                    {addOns.map(addon => {
-                                        const isChildSeat = addon.addOnName.toLowerCase().includes('child seat');
-                                        const isSelected = selectedAddOnIds.includes(addon.addOnId);
+                    <div className="lg:col-span-1 space-y-6">
+                        <Card className="border-none shadow-xl bg-card/50 backdrop-blur-sm">
+                            <div className="p-6">
+                                <h4 className="text-xl font-bold mb-6 flex items-center gap-2">
+                                    <PlusCircle className="w-5 h-5 text-primary" />
+                                    Available Extras
+                                </h4>
 
-                                        return (
-                                            <div key={addon.addOnId} className="list-group-item bg-transparent border-0 p-3 rounded-4 glass-effect mb-2">
-                                                <div className="d-flex gap-3 align-items-center mb-2">
-                                                    <input
-                                                        className="form-check-input flex-shrink-0"
-                                                        type="checkbox"
-                                                        checked={isSelected}
-                                                        onChange={() => toggleAddOn(addon.addOnId)}
-                                                    />
-                                                    <div className="d-flex justify-content-between w-100 align-items-center">
-                                                        <span className="fw-medium">{addon.addOnName}</span>
-                                                        <span className="text-primary fw-bold">₹{addon.addonDailyRate.toFixed(0)}</span>
+                                <div className="space-y-4">
+                                    {addOns.length > 0 ? (
+                                        addOns.map(addon => {
+                                            const isChildSeat = addon.addOnName.toLowerCase().includes('child seat');
+                                            const isSelected = selectedAddOnIds.includes(addon.addOnId);
+
+                                            return (
+                                                <div key={addon.addOnId} className={`p-4 rounded-xl border transition-all ${isSelected ? 'bg-primary/5 border-primary shadow-sm' : 'bg-background hover:border-primary/50'
+                                                    }`}>
+                                                    <div className="flex items-start gap-4">
+                                                        <div className="pt-1">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                                                                checked={isSelected}
+                                                                onChange={() => toggleAddOn(addon.addOnId)}
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <span className="font-bold text-sm">{addon.addOnName}</span>
+                                                                <span className="text-primary font-bold">₹{addon.addonDailyRate.toFixed(0)}</span>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">Daily rate</p>
+
+                                                            {isChildSeat && isSelected && (
+                                                                <div className="mt-4 pt-4 border-t border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                    <Label className="text-xs font-bold text-muted-foreground mb-2 block">QUANTITY</Label>
+                                                                    <div className="flex items-center gap-4">
+                                                                        <select
+                                                                            className="flex h-9 w-24 items-center justify-between rounded-md border border-primary/50 bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                                                                            value={childSeatQty}
+                                                                            onChange={(e) => setChildSeatQty(Number(e.target.value))}
+                                                                        >
+                                                                            {[1, 2, 3].map(q => <option key={q} value={q}>{q} Seat{q > 1 ? 's' : ''}</option>)}
+                                                                        </select>
+                                                                        <div className="text-right flex-1">
+                                                                            <p className="text-xs text-muted-foreground mb-1">Total</p>
+                                                                            <p className="text-sm font-bold text-primary">₹{(addon.addonDailyRate * childSeatQty).toFixed(0)}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-
-                                                {isChildSeat && isSelected && (
-                                                    <div className="ms-5 mt-2 animate-fade-in">
-                                                        <label className="small text-muted mb-1 d-block">Quantity</label>
-                                                        <select
-                                                            className="form-select form-select-sm rounded-pill w-auto px-3 border-primary"
-                                                            value={childSeatQty}
-                                                            onChange={(e) => setChildSeatQty(Number(e.target.value))}
-                                                        >
-                                                            <option value="1">1 Seat</option>
-                                                            <option value="2">2 Seats</option>
-                                                            <option value="3">3 Seats</option>
-                                                        </select>
-                                                        <small className="text-primary mt-1 d-block fw-bold">
-                                                            Total: ₹{(addon.addonDailyRate * childSeatQty).toFixed(0)}
-                                                        </small>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center py-8 text-muted-foreground italic">No add-ons available.</div>
+                                    )}
                                 </div>
-                            ) : <p className="text-muted">No add-ons available at this time.</p>}
-                        </div>
+                            </div>
+                        </Card>
+
+                        <Card className="border-none shadow-xl bg-primary text-primary-foreground">
+                            <div className="p-6">
+                                <h4 className="font-bold mb-4">Reservation Summary</h4>
+                                <div className="space-y-3 text-sm">
+                                    <div className="flex justify-between opacity-80">
+                                        <span>Vehicle Rate ({calculateRentalDays()} days)</span>
+                                        <span>₹{((selectedCar?.carType?.dailyRate || 0) * calculateRentalDays()).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between opacity-80 border-b border-white/20 pb-3">
+                                        <span>Extras</span>
+                                        <span>₹{(calculateTotalCost() - (selectedCar?.carType?.dailyRate || 0) * calculateRentalDays()).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between text-lg font-black pt-2">
+                                        <span>Total Amount</span>
+                                        <span>₹{calculateTotalCost().toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
                     </div>
 
                     {/* Customer Form Column */}
-                    <div className="col-md-8">
-                        <div className="premium-card p-5">
-                            <h4 className="fw-bold mb-4">Customer Details</h4>
-
-
-                            <form onSubmit={handleSaveCustomer}>
-                                <div className="row g-4">
-                                    <div className="col-md-12">
-                                        <label className="form-label text-muted small">Email Address</label>
-                                        <input
+                    <div className="lg:col-span-2">
+                        <Card className="border-none shadow-xl">
+                            <CardHeader className="p-8 pb-4">
+                                <CardTitle className="text-2xl font-bold">Recipient Details</CardTitle>
+                                <CardDescription>Please provide the driver's information.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-8">
+                                <form onSubmit={handleSaveCustomer} className="space-y-8">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email" className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Email Address</Label>
+                                        <Input
+                                            id="email"
                                             type="email"
-                                            className="form-control"
                                             value={customer.email || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, email: val }));
-                                            }}
+                                            onChange={e => setCustomer(prev => ({ ...prev, email: e.target.value }))}
                                             required
                                             readOnly={!!currentUser}
+                                            className="h-12 bg-muted/30"
                                         />
-                                        {errors.email && <small className="text-danger">{errors.email}</small>}
+                                        {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label text-muted small">First Name</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
-                                            value={customer.firstName || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, firstName: val }));
-                                                if (errors.firstName) setErrors({ ...errors, firstName: '' });
-                                            }}
-                                            required
-                                        />
-                                        {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="firstName" className="text-sm font-bold text-muted-foreground uppercase tracking-widest">First Name</Label>
+                                            <Input
+                                                id="firstName"
+                                                value={customer.firstName || ''}
+                                                onChange={e => {
+                                                    setCustomer(prev => ({ ...prev, firstName: e.target.value }));
+                                                    if (errors.firstName) setErrors({ ...errors, firstName: '' });
+                                                }}
+                                                required
+                                                className={`h-12 ${errors.firstName ? 'border-destructive' : ''}`}
+                                            />
+                                            {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="lastName" className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Last Name</Label>
+                                            <Input
+                                                id="lastName"
+                                                value={customer.lastName || ''}
+                                                onChange={e => {
+                                                    setCustomer(prev => ({ ...prev, lastName: e.target.value }));
+                                                    if (errors.lastName) setErrors({ ...errors, lastName: '' });
+                                                }}
+                                                required
+                                                className={`h-12 ${errors.lastName ? 'border-destructive' : ''}`}
+                                            />
+                                            {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
+                                        </div>
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label text-muted small">Last Name</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.lastName ? 'is-invalid' : ''}`}
-                                            value={customer.lastName || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, lastName: val }));
-                                                if (errors.lastName) setErrors({ ...errors, lastName: '' });
-                                            }}
-                                            required
-                                        />
-                                        {errors.lastName && <div className="invalid-feedback">{errors.lastName}</div>}
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="mobile" className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Phone Number</Label>
+                                            <Input
+                                                id="mobile"
+                                                placeholder="10-digit mobile"
+                                                value={customer.mobileNumber || ''}
+                                                onChange={e => {
+                                                    setCustomer(prev => ({ ...prev, mobileNumber: e.target.value }));
+                                                    if (errors.mobileNumber) setErrors({ ...errors, mobileNumber: '' });
+                                                }}
+                                                required
+                                                className={`h-12 ${errors.mobileNumber ? 'border-destructive' : ''}`}
+                                            />
+                                            {errors.mobileNumber && <p className="text-xs text-destructive">{errors.mobileNumber}</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="dob" className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Date of Birth</Label>
+                                            <Input
+                                                id="dob"
+                                                type="date"
+                                                max={new Date().toISOString().split('T')[0]}
+                                                value={customer.dateOfBirth || ''}
+                                                onChange={e => {
+                                                    setCustomer(prev => ({ ...prev, dateOfBirth: e.target.value }));
+                                                    if (errors.dateOfBirth) setErrors({ ...errors, dateOfBirth: '' });
+                                                }}
+                                                required
+                                                className={`h-12 ${errors.dateOfBirth ? 'border-destructive' : ''}`}
+                                            />
+                                            {errors.dateOfBirth && <p className="text-xs text-destructive">{errors.dateOfBirth}</p>}
+                                        </div>
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label text-muted small">Mobile</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.mobileNumber ? 'is-invalid' : ''}`}
-                                            value={customer.mobileNumber || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, mobileNumber: val }));
-                                                if (errors.mobileNumber) setErrors({ ...errors, mobileNumber: '' });
-                                            }}
-                                            required
-                                            placeholder="10 digit number"
-                                        />
-                                        {errors.mobileNumber && <div className="invalid-feedback">{errors.mobileNumber}</div>}
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label text-muted small">Date of Birth</label>
-                                        <input
-                                            type="date"
-                                            className={`form-control ${errors.dateOfBirth ? 'is-invalid' : ''}`}
-                                            value={customer.dateOfBirth || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, dateOfBirth: val }));
-                                                if (errors.dateOfBirth) setErrors({ ...errors, dateOfBirth: '' });
-                                            }}
-                                            max={new Date().toISOString().split('T')[0]}
-                                        />
-                                        {errors.dateOfBirth && <div className="invalid-feedback">{errors.dateOfBirth}</div>}
-                                    </div>
-                                    <div className="col-md-12">
-                                        <label className="form-label text-muted small">Address</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.addressLine1 ? 'is-invalid' : ''}`}
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="address" className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Residential Address</Label>
+                                        <Input
+                                            id="address"
                                             value={customer.addressLine1 || ''}
                                             onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, addressLine1: val }));
+                                                setCustomer(prev => ({ ...prev, addressLine1: e.target.value }));
                                                 if (errors.addressLine1) setErrors({ ...errors, addressLine1: '' });
                                             }}
-                                        />
-                                        {errors.addressLine1 && <div className="invalid-feedback">{errors.addressLine1}</div>}
-                                    </div>
-
-                                    <h5 className="fw-bold mt-5 mb-2 text-primary">Identification</h5>
-                                    <div className="col-md-4">
-                                        <label className="form-label text-muted small">License No</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.drivingLicenseNumber ? 'is-invalid' : ''}`}
-                                            value={customer.drivingLicenseNumber || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, drivingLicenseNumber: val }));
-                                                if (errors.drivingLicenseNumber) setErrors({ ...errors, drivingLicenseNumber: '' });
-                                            }}
-                                        />
-                                        {errors.drivingLicenseNumber && <div className="invalid-feedback">{errors.drivingLicenseNumber}</div>}
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label text-muted small">Issued By</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.issuedByDL ? 'is-invalid' : ''}`}
-                                            value={customer.issuedByDL || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, issuedByDL: val }));
-                                                if (errors.issuedByDL) setErrors({ ...errors, issuedByDL: '' });
-                                            }}
-                                        />
-                                        {errors.issuedByDL && <div className="invalid-feedback">{errors.issuedByDL}</div>}
-                                    </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label text-muted small">Valid Thru</label>
-                                        <input
-                                            type="date"
-                                            className={`form-control ${errors.validThroughDL ? 'is-invalid' : ''}`}
-                                            value={customer.validThroughDL || ''}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, validThroughDL: val }));
-                                                if (errors.validThroughDL) setErrors({ ...errors, validThroughDL: '' });
-                                            }}
-                                            min={new Date().toISOString().split('T')[0]}
-                                        />
-                                        {errors.validThroughDL && <div className="invalid-feedback">{errors.validThroughDL}</div>}
-                                    </div>
-
-                                    <h5 className="fw-bold mt-5 mb-2 text-primary">Payment Information</h5>
-                                    <div className="col-md-4">
-                                        <label className="form-label text-muted small">Card Type</label>
-                                        <select
-                                            className="form-select"
-                                            value={customer.creditCardType || 'VISA'}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                setCustomer(prev => ({ ...prev, creditCardType: val }));
-                                            }}
-                                        >
-                                            <option value="VISA">VISA</option>
-                                            <option value="MasterCard">MasterCard</option>
-                                            <option value="Amex">Amex</option>
-                                        </select>
-                                    </div>
-                                    <div className="col-md-8">
-                                        <label className="form-label text-muted small">Card Number</label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${errors.creditCardNumber ? 'is-invalid' : ''}`}
-                                            value={customer.creditCardNumber || ''}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '').slice(0, 16); // Only allow digits, max 16
-                                                setCustomer(prev => ({ ...prev, creditCardNumber: val }));
-                                                if (errors.creditCardNumber) setErrors({ ...errors, creditCardNumber: '' });
-                                            }}
                                             required
-                                            placeholder="16-digit card number"
+                                            className={`h-12 ${errors.addressLine1 ? 'border-destructive' : ''}`}
                                         />
-                                        {errors.creditCardNumber && <div className="invalid-feedback">{errors.creditCardNumber}</div>}
+                                        {errors.addressLine1 && <p className="text-xs text-destructive">{errors.addressLine1}</p>}
                                     </div>
-                                </div>
 
-                                <div className="mt-5 d-flex justify-content-between">
-                                    <button type="button" className="btn btn-outline-secondary rounded-pill px-4" onClick={() => setStep(2)}>Back</button>
-                                    <button type="submit" className="btn btn-premium rounded-pill px-5">Continue to Confirm</button>
-                                </div>
-                            </form>
-                        </div>
+                                    <div className="pt-6 border-t">
+                                        <h5 className="text-lg font-bold mb-6 flex items-center gap-2 text-primary">
+                                            <ShieldCheck className="w-5 h-5" />
+                                            Identification & Payout
+                                        </h5>
+                                        <div className="grid md:grid-cols-3 gap-6">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="license" className="text-sm font-bold text-muted-foreground">DL Number</Label>
+                                                <Input
+                                                    id="license"
+                                                    value={customer.drivingLicenseNumber || ''}
+                                                    onChange={e => {
+                                                        setCustomer(prev => ({ ...prev, drivingLicenseNumber: e.target.value }));
+                                                        if (errors.drivingLicenseNumber) setErrors({ ...errors, drivingLicenseNumber: '' });
+                                                    }}
+                                                    className={errors.drivingLicenseNumber ? 'border-destructive' : ''}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="dlIssued" className="text-sm font-bold text-muted-foreground">Issued By</Label>
+                                                <Input
+                                                    id="dlIssued"
+                                                    placeholder="State/RTO"
+                                                    value={customer.issuedByDL || ''}
+                                                    onChange={e => {
+                                                        setCustomer(prev => ({ ...prev, issuedByDL: e.target.value }));
+                                                        if (errors.issuedByDL) setErrors({ ...errors, issuedByDL: '' });
+                                                    }}
+                                                    className={errors.issuedByDL ? 'border-destructive' : ''}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="dlValid" className="text-sm font-bold text-muted-foreground">Valid Through</Label>
+                                                <Input
+                                                    id="dlValid"
+                                                    type="date"
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    value={customer.validThroughDL || ''}
+                                                    onChange={e => {
+                                                        setCustomer(prev => ({ ...prev, validThroughDL: e.target.value }));
+                                                        if (errors.validThroughDL) setErrors({ ...errors, validThroughDL: '' });
+                                                    }}
+                                                    className={errors.validThroughDL ? 'border-destructive' : ''}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-3 gap-6 pt-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="cardType" className="text-sm font-bold text-muted-foreground">Card Network</Label>
+                                            <select
+                                                id="cardType"
+                                                className="flex h-12 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                value={customer.creditCardType || 'VISA'}
+                                                onChange={e => setCustomer(prev => ({ ...prev, creditCardType: e.target.value }))}
+                                            >
+                                                <option value="VISA">VISA</option>
+                                                <option value="MasterCard">MasterCard</option>
+                                                <option value="Amex">Amex</option>
+                                            </select>
+                                        </div>
+                                        <div className="md:col-span-2 space-y-2">
+                                            <Label htmlFor="cardNumber" className="text-sm font-bold text-muted-foreground">Card Number (16-digit)</Label>
+                                            <Input
+                                                id="cardNumber"
+                                                placeholder="0000 0000 0000 0000"
+                                                value={customer.creditCardNumber || ''}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/\D/g, '').slice(0, 16);
+                                                    setCustomer(prev => ({ ...prev, creditCardNumber: val }));
+                                                    if (errors.creditCardNumber) setErrors({ ...errors, creditCardNumber: '' });
+                                                }}
+                                                required
+                                                className={`h-12 tracking-widest ${errors.creditCardNumber ? 'border-destructive' : ''}`}
+                                            />
+                                            {errors.creditCardNumber && <p className="text-xs text-destructive">{errors.creditCardNumber}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center pt-10 border-t">
+                                        <Button variant="ghost" type="button" onClick={() => setStep(2)} className="px-8 h-12 font-bold">
+                                            <ChevronLeft className="mr-2 h-4 w-4" /> Back to Vehicles
+                                        </Button>
+                                        <Button type="submit" disabled={loading} className="px-12 h-14 text-lg font-black rounded-full shadow-xl shadow-primary/30">
+                                            {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : null}
+                                            Confirm Details
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             )}
 
             {/* Step 4: Confirm Booking */}
             {step === 4 && (
-                <div className="premium-card p-5 mx-auto shadow-lg" style={{ maxWidth: '700px' }}>
-                    <div className="text-center mb-4">
-                        <i className="bi bi-check-circle-fill display-4 text-success mb-3"></i>
-                        <h3 className="fw-bold">Review Reservation</h3>
-                        <p className="text-muted">Almost there! Please verify your details.</p>
-                    </div>
-
-                    <div className="glass-effect p-4 rounded-4 mb-4 border-0">
-                        <div className="row g-3">
-                            <div className="col-6">
-                                <label className="small text-muted mb-0">Vehicle</label>
-                                <p className="fw-bold mb-0">{selectedCar?.carModel}</p>
+                <div className="max-w-3xl mx-auto animate-in zoom-in-95 duration-500">
+                    <Card className="border-none shadow-2xl overflow-hidden">
+                        <div className="bg-primary p-12 text-center text-primary-foreground relative">
+                            <div className="absolute top-0 right-0 p-4 opacity-10">
+                                <CheckCircle2 className="w-48 h-48 -mr-12 -mt-12" />
                             </div>
-                            <div className="col-6">
-                                <label className="small text-muted mb-0">Rate</label>
-                                <p className="fw-bold mb-0 text-primary">₹{selectedCar?.carType?.dailyRate} / day</p>
-                            </div>
-                            <div className="col-6">
-                                <label className="small text-muted mb-0">Pickup</label>
-                                <p className="fw-bold mb-0">{hubs.find(h => h.hubId === Number(selectedHub))?.hubName}</p>
-                            </div>
-                            <div className="col-6">
-                                <label className="small text-muted mb-0">Duration</label>
-                                <p className="fw-bold mb-0">{dates.startDate} → {dates.endDate}</p>
-                            </div>
-                            <div className="col-12 border-top border-light pt-3 mt-3">
-                                <label className="small text-muted mb-0">Renter</label>
-                                <p className="fw-bold mb-0">{customer.firstName} {customer.lastName} ({customer.email})</p>
-                            </div>
-
-                            {/* Add-ons Recap */}
-                            {selectedAddOnIds.length > 0 && (
-                                <div className="col-12 mt-3 p-3 bg-primary bg-opacity-10 rounded-4">
-                                    <label className="small text-muted d-block mb-2">Selected Extras</label>
-                                    {addOns.filter(a => selectedAddOnIds.includes(a.addOnId)).map(a => (
-                                        <div key={a.addOnId} className="d-flex justify-content-between small">
-                                            <span>
-                                                {a.addOnName}
-                                                {a.addOnName.toLowerCase().includes('child seat') && ` (x${childSeatQty})`}
-                                            </span>
-                                            <span className="fw-bold">
-                                                ₹{a.addOnName.toLowerCase().includes('child seat') ? (a.addonDailyRate * childSeatQty) : a.addonDailyRate}
-                                            </span>
-                                        </div>
-                                    ))}
+                            <div className="relative z-10">
+                                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-md">
+                                    <CheckCircle2 className="w-12 h-12 text-white" />
                                 </div>
-                            )}
-                            {/* Total Cost Display */}
-                            <div className="col-12 mt-4 pt-3 border-top border-light">
-                                <div className="d-flex justify-content-between align-items-center bg-primary bg-opacity-10 p-4 rounded-4">
-                                    <div>
-                                        <label className="small text-muted d-block mb-1 uppercase tracking-wider">Estimated Total</label>
-                                        <h2 className="fw-bold mb-0 text-primary">₹{calculateTotalCost().toLocaleString()}</h2>
-                                    </div>
-                                    <div className="text-end">
-                                        <span className="badge bg-primary rounded-pill px-3 py-2">
-                                            {calculateRentalDays()} Day{calculateRentalDays() > 1 ? 's' : ''} Rental
-                                        </span>
-                                    </div>
-                                </div>
+                                <h3 className="text-3xl font-black mb-2">Review Reservation</h3>
+                                <p className="text-primary-foreground/80 font-medium">Verify your selection before final confirmation.</p>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="d-flex justify-content-between">
-                        <button className="btn btn-outline-secondary rounded-pill px-4" onClick={() => setStep(3)}>Back</button>
-                        <button className="btn btn-premium rounded-pill px-5 py-3 fs-5" onClick={handleConfirmBooking}>Confirm & Reserve</button>
-                    </div>
+                        <CardContent className="p-10 space-y-10">
+                            <div className="grid md:grid-cols-2 gap-10">
+                                <div className="space-y-6">
+                                    <div>
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Vehicle Selection</Label>
+                                        <div className="flex items-center gap-4 group">
+                                            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center transition-colors group-hover:bg-primary/20">
+                                                <CarFront className="w-6 h-6 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xl font-black text-foreground">{selectedCar?.carModel}</p>
+                                                <p className="text-sm font-bold text-primary">₹{selectedCar?.carType?.dailyRate} / Day</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Location & Hub</Label>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                                                <MapPin className="w-6 h-6 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-foreground">{hubs.find(h => h.hubId === Number(selectedHub))?.hubName || 'Standard Hub'}</p>
+                                                <p className="text-xs text-muted-foreground">{hubs.find(h => h.hubId === Number(selectedHub))?.hubAddress}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Rental Period</Label>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                                                <CalendarDays className="w-6 h-6 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-bold">{dates.startDate}</p>
+                                                    <span className="text-muted-foreground">to</span>
+                                                    <p className="font-bold">{dates.endDate}</p>
+                                                </div>
+                                                <p className="text-xs font-bold text-primary mt-1">{calculateRentalDays()} Full Days</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2 block">Drivers Information</Label>
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-muted rounded-xl flex items-center justify-center">
+                                                <User className="w-6 h-6 text-muted-foreground" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold">{customer.firstName} {customer.lastName}</p>
+                                                <p className="text-xs text-muted-foreground">{customer.email}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-muted/30 rounded-3xl p-8 border border-muted">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h5 className="font-black text-lg">Financial Summary</h5>
+                                    <div className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full tracking-widest">Pricing in INR</div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">Standard Fleet Hire ({calculateRentalDays()} days)</span>
+                                        <span className="font-bold">₹{((selectedCar?.carType?.dailyRate || 0) * calculateRentalDays()).toLocaleString()}</span>
+                                    </div>
+
+                                    {selectedAddOnIds.length > 0 && (
+                                        <div className="space-y-2 pt-2 border-t border-muted-foreground/10">
+                                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Selected Extras</span>
+                                            {addOns.filter(a => selectedAddOnIds.includes(a.addOnId)).map(a => (
+                                                <div key={a.addOnId} className="flex justify-between text-sm px-2">
+                                                    <span className="text-muted-foreground flex items-center gap-2">
+                                                        <div className="w-1 h-1 bg-primary rounded-full" />
+                                                        {a.addOnName} {a.addOnName.toLowerCase().includes('child seat') ? `(x${childSeatQty})` : ''}
+                                                    </span>
+                                                    <span className="font-medium">₹{(a.addOnName.toLowerCase().includes('child seat') ? a.addonDailyRate * childSeatQty : a.addonDailyRate).toFixed(0)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-between items-end pt-6 border-t-2 border-primary/20">
+                                        <div>
+                                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] mb-1">Final Payment</p>
+                                            <p className="text-sm text-muted-foreground">All taxes and fees included</p>
+                                        </div>
+                                        <div className="text-end">
+                                            <p className="text-4xl font-black text-primary tracking-tight">₹{calculateTotalCost().toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 pt-4">
+                                <Button variant="ghost" onClick={() => setStep(3)} className="flex-1 h-14 font-bold border-2">
+                                    Modify Details
+                                </Button>
+                                <Button onClick={handleConfirmBooking} className="flex-[2] h-14 text-xl font-black rounded-full shadow-2xl shadow-primary/40">
+                                    Complete Reservation
+                                </Button>
+                            </div>
+                        </CardContent>
+
+                        <div className="bg-muted/50 p-6 text-center border-t">
+                            <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
+                                <ShieldCheck className="w-3 h-3" />
+                                Secure 256-bit encrypted checkout. By clicking Complete Reservation you agree to our terms.
+                            </p>
+                        </div>
+                    </Card>
                 </div>
             )}
         </div>

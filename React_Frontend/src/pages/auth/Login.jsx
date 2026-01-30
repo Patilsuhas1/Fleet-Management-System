@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthService from '../../services/authService';
 import { useGoogleLogin } from '@react-oauth/google';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -30,28 +35,6 @@ const Login = () => {
             setLoading(true);
             setError('');
             try {
-                // The tokenResponse.access_token is what we get from useGoogleLogin
-                // But the backend expects an ID token if using GoogleIdTokenVerifier.
-                // WAIT: @react-oauth/google's useGoogleLogin by default returns an access token (Implicit Flow).
-                // If the backend uses GoogleIdTokenVerifier, it needs an ID Token.
-                // However, many implementations use the access token to fetch user info from https://www.googleapis.com/oauth2/v3/userinfo.
-                // Let's check GoogleAuthService.java again. 
-                // It uses GoogleIdTokenVerifier.verify(tokenHtml). This requires an ID Token.
-
-                // To get an ID token with @react-oauth/google, we should use the <GoogleLogin> component 
-                // OR use the code flow and exchange it on the backend.
-                // But for simplicity and to keep the custom button, let's see if we can get the ID token.
-                // Actually, the <GoogleLogin> component is the easiest way to get an ID token.
-
-                // If I must use useGoogleLogin, I might need to change the backend or use a different approach.
-                // Let's use the <GoogleLogin> component hidden or just wrap the existing button logic.
-                // Actually, let's just use the standard <GoogleLogin> component styled to match if possible, 
-                // OR use a more manual approach.
-
-                // RE-READING GoogleAuthService.java:
-                // GoogleIdToken idToken = verifier.verify(tokenHtml);
-                // This DEFINITELY needs an ID Token.
-
                 await AuthService.googleLogin(tokenResponse.access_token);
                 navigate('/');
                 window.location.reload();
@@ -68,91 +51,93 @@ const Login = () => {
     });
 
     return (
-        <div className="login-page py-5">
-            <div className="container py-5">
-                <div className="row justify-content-center">
-                    <div className="col-md-5">
-                        <div className="premium-card p-5 animate-slide-up bg-glass">
-                            <div className="text-center mb-5">
-                                <h2 className="display-6 fw-bold text-gradient mb-2">Welcome Back</h2>
-                                <p className="text-muted">Sign in to your IndiaDrive account</p>
+        <div className="min-h-screen py-12 flex items-center justify-center bg-muted/30">
+            <div className="w-full max-w-md px-4">
+                <Card className="border-none shadow-xl bg-card/80 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-10 duration-500">
+                    <CardHeader className="space-y-1 text-center">
+                        <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+                            Welcome Back
+                        </CardTitle>
+                        <CardDescription>
+                            Sign in to your IndiaDrive account
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {error && (
+                            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4 flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4" />
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="username">Username</Label>
+                                <Input
+                                    id="username"
+                                    placeholder="Enter your username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="password">Password</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                />
                             </div>
 
-                            {error && (
-                                <div className="alert alert-danger border-0 rounded-4 mb-4" role="alert">
-                                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                                    {error}
-                                </div>
-                            )}
-
-                            <form onSubmit={handleLogin}>
-                                <div className="form-floating mb-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
                                     <input
-                                        type="text"
-                                        className="form-control rounded-4 shadow-sm"
-                                        id="username"
-                                        placeholder="Username"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        required
+                                        type="checkbox"
+                                        id="remember"
+                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                                     />
-                                    <label htmlFor="username">Username</label>
+                                    <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">Remember me</Label>
                                 </div>
+                            </div>
 
-                                <div className="form-floating mb-4">
-                                    <input
-                                        type="password"
-                                        className="form-control rounded-4 shadow-sm"
-                                        id="password"
-                                        placeholder="Password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                    />
-                                    <label htmlFor="password">Password</label>
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Sign In
+                            </Button>
+
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
                                 </div>
-
-                                <div className="d-flex justify-content-between align-items-center mb-4 px-1">
-                                    <div className="form-check">
-                                        <input className="form-check-input" type="checkbox" id="rememberMe" />
-                                        <label className="form-check-label text-muted small" htmlFor="rememberMe">
-                                            Remember me
-                                        </label>
-                                    </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                                 </div>
+                            </div>
 
-                                <button
-                                    type="submit"
-                                    className="btn btn-premium btn-lg w-100 rounded-pill mb-4 shadow-glow"
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    ) : null}
-                                    Sign In
-                                </button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => loginWithGoogle()}
+                                disabled={loading}
+                            >
+                                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="mr-2 h-4 w-4" />
+                                Google
+                            </Button>
 
-                                <div className="divider d-flex align-items-center my-4">
-                                    <p className="text-center fw-medium mx-3 mb-0 text-muted">OR</p>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-premium btn-lg w-100 rounded-pill mb-4 border shadow-sm d-flex align-items-center justify-content-center"
-                                    onClick={() => loginWithGoogle()}
-                                    disabled={loading}
-                                >
-                                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20" className="me-2" />
-                                    Continue with Google
-                                </button>
-
-                                <p className="text-center text-muted mt-4">
-                                    Don't have an account? <Link to="/register" className="text-primary fw-bold text-decoration-none">Sign Up</Link>
-                                </p>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+                            <div className="text-center text-sm text-muted-foreground mt-4">
+                                Don't have an account?{" "}
+                                <Link to="/register" className="font-semibold text-primary hover:underline">
+                                    Sign Up
+                                </Link>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );

@@ -29,4 +29,3 @@ public class FleeManApplication {
 		return new RestTemplate();
 	}
 }
-

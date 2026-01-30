@@ -129,7 +129,7 @@ public class BookingService {
                                 CarMaster newCar = carRepository.findById(request.getCarId())
                                                 .orElseThrow(() -> new IllegalArgumentException("Invalid Car ID"));
 
-                                if (newCar.getIsAvailable() != CarMaster.AvailabilityStatus.Y) {
+                                if (!newCar.isActuallyAvailable()) {
                                         throw new RuntimeException("Selected car is not available");
                                 }
 
@@ -264,13 +264,15 @@ public class BookingService {
 
                 if (booking.getCar() != null) {
                         response.setNumberPlate(booking.getCar().getNumberPlate());
-                        if (booking.getCar().getCarType() != null) {
-                                // Optionally set car type name if needed in response
-                        }
+                }
+
+                if (booking.getCarType() != null) {
+                        response.setCarTypeId(booking.getCarType().getCarTypeId());
                 }
 
                 if (booking.getPickupHub() != null) {
                         response.setPickupHub(booking.getPickupHub().getHubName());
+                        response.setPickupHubId((long) booking.getPickupHub().getHubId());
                 }
 
                 if (booking.getReturnHub() != null) {
@@ -361,7 +363,7 @@ public class BookingService {
                 if (request.getCarId() > 0 && booking.getCar().getCarId() != request.getCarId()) {
                         CarMaster newCar = carRepository.findById(request.getCarId())
                                         .orElseThrow(() -> new IllegalArgumentException("Invalid Car ID"));
-                        if (newCar.getIsAvailable() != CarMaster.AvailabilityStatus.Y) {
+                        if (!newCar.isActuallyAvailable()) {
                                 throw new RuntimeException("Selected car is not available");
                         }
 

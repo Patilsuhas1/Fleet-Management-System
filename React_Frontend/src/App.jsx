@@ -16,46 +16,47 @@ import AdminBookings from './pages/admin/AdminBookings';
 import StaffManagement from './pages/admin/StaffManagement';
 import ManageBooking from './pages/client/ManageBooking';
 import CustomerCare from './pages/client/CustomerCare';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function App() {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark-theme');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
-    // Apply theme to body
-    document.body.className = theme;
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark-theme' ? 'light-theme' : 'dark-theme');
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
   return (
     <Router>
-      <Navbar theme={theme} toggleTheme={toggleTheme} />
-      <div className="main-content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/customer-care" element={<CustomerCare />} />
-          <Route path="/booking" element={<Booking />} />
-          <Route path="/manage-booking" element={<ManageBooking />} />
-          <Route path="/my-bookings" element={<MyBookings />} />
-          <Route path="/select-car" element={<CarSelection />} />
-          <Route path="/select-hub" element={<HubSelection />} />
-          <Route path="/staff/dashboard" element={<StaffDashboard />} />
-          <Route path="/staff/handover" element={<StaffDashboard />} />
-          <Route path="/staff/return" element={<StaffDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/bookings" element={<AdminBookings />} />
-          <Route path="/admin/staff" element={<StaffManagement />} />
-        </Routes>
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <Navbar theme={theme} toggleTheme={toggleTheme} />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/customer-care" element={<CustomerCare />} />
+            <Route path="/booking" element={<Booking />} />
+            <Route path="/manage-booking" element={<ManageBooking />} />
+            <Route path="/my-bookings" element={<MyBookings />} />
+            <Route path="/select-car" element={<CarSelection />} />
+            <Route path="/select-hub" element={<HubSelection />} />
+            <Route path="/staff/dashboard" element={<StaffDashboard />} />
+            <Route path="/staff/handover" element={<StaffDashboard />} />
+            <Route path="/staff/return" element={<StaffDashboard />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/bookings" element={<AdminBookings />} />
+            <Route path="/admin/staff" element={<StaffManagement />} />
+          </Routes>
+        </main>
+        <Footer />
       </div>
-      <Footer />
     </Router>
   );
 }

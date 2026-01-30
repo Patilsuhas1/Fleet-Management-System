@@ -13,7 +13,9 @@ public class BookingResponse {
     private String carName;
     private String numberPlate;
     private String pickupHub;
+    private Long pickupHubId; // Added for internal logic
     private String returnHub;
+    private Long carTypeId; // Added for filtering
     private LocalDate startDate;
     private LocalDate endDate;
     private Double dailyRate;

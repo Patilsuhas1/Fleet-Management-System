@@ -123,8 +123,12 @@ public class CarMaster {
 		this.maintenanceDueDate = maintenanceDueDate;
 	}
 
+	public boolean isActuallyAvailable() {
+		return isAvailable == AvailabilityStatus.Y || isAvailable == AvailabilityStatus.YES;
+	}
+
 	public enum AvailabilityStatus {
-		Y, N
+		Y, N, YES, NO
 	}
 
 }

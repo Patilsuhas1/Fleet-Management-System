@@ -29,7 +29,11 @@ const ApiService = {
 
     // Cars
     getCarTypes: () => instance.get('/api/v1/car-types').then(res => res.data),
-    getAvailableCars: (hubId, startDate, endDate) => instance.get(`/api/v1/cars/available?hubId=${hubId}&startDate=${startDate}&endDate=${endDate}`).then(res => res.data),
+    getAvailableCars: (hubId, startDate, endDate, carTypeId) => {
+        let url = `/api/v1/cars/available?hubId=${hubId}&startDate=${startDate}&endDate=${endDate}`;
+        if (carTypeId) url += `&carTypeId=${carTypeId}`;
+        return instance.get(url).then(res => res.data);
+    },
     uploadCars: (file) => {
         const formData = new FormData();
         formData.append('file', file);

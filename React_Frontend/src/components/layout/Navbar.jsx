@@ -1,99 +1,142 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService';
+import { Button } from "@/components/ui/button";
+import {
+    Sheet,
+    SheetContent,
+    SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator,
+    DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { Menu, Moon, Sun, Shield, LogOut, User as UserIcon } from "lucide-react";
 
 const Navbar = ({ theme, toggleTheme }) => {
     const navigate = useNavigate();
     const user = AuthService.getCurrentUser();
     const role = user?.role;
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleLogout = () => {
         AuthService.logout();
         navigate('/login');
     };
 
+    const NavItems = () => (
+        <>
+            <Link to="/" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsOpen(false)}>Home</Link>
+
+            {(!user || role === 'CUSTOMER') && (
+                <Link to="/booking" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsOpen(false)}>Book a Car</Link>
+            )}
+
+            {role === 'CUSTOMER' && (
+                <Link to="/my-bookings" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsOpen(false)}>My Bookings</Link>
+            )}
+
+            {role === 'STAFF' && (
+                <Link to="/staff/dashboard" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsOpen(false)}>Dashboard</Link>
+            )}
+
+            {role === 'ADMIN' && (
+                <Link to="/admin/dashboard" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsOpen(false)}>Admin Panel</Link>
+            )}
+
+            <Link to="/about" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsOpen(false)}>About Us</Link>
+            <Link to="/customer-care" className="text-sm font-medium transition-colors hover:text-primary" onClick={() => setIsOpen(false)}>Support</Link>
+        </>
+    );
+
     return (
-        <nav className="navbar navbar-expand-lg border-bottom border-light sticky-top">
-            <div className="container">
-                <Link className="navbar-brand d-flex align-items-center" to="/">
-                    <i className="bi bi-shield-shaded me-2 text-primary"></i>
-                    <span className="text-gradient">IndiaDrive</span>
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-16 items-center justify-between">
+                <Link className="flex items-center gap-2 font-bold text-xl" to="/">
+                    <Shield className="h-6 w-6 text-primary filled-current" />
+                    <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">IndiaDrive</span>
                 </Link>
-                <button className="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span className="navbar-toggler-icon"></span>
-                </button>
-                <div className="collapse navbar-collapse" id="navbarNav">
-                    <ul className="navbar-nav mx-auto">
-                        <li className="nav-item">
-                            <Link className="nav-link px-3" to="/">Home</Link>
-                        </li>
 
-                        {(!user || role === 'CUSTOMER') && (
-                            <li className="nav-item">
-                                <Link className="nav-link px-3" to="/booking">Book a Car</Link>
-                            </li>
-                        )}
+                {/* Desktop Navigation */}
+                <nav className="hidden md:flex items-center gap-6">
+                    <NavItems />
+                </nav>
 
-                        {/* Customer Links */}
-                        {role === 'CUSTOMER' && (
-                            <>
-                                <li className="nav-item">
-                                    <Link className="nav-link px-3" to="/my-bookings">My Bookings</Link>
-                                </li>
-                            </>
-                        )}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleTheme}
+                        title={`Switch to ${theme === 'dark-theme' ? 'Light' : 'Dark'} Mode`}
+                    >
+                        {theme === 'dark-theme' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                    </Button>
 
-                        {/* Staff Links */}
-                        {role === 'STAFF' && (
-                            <>
-                                <li className="nav-item">
-                                    <Link className="nav-link px-3" to="/staff/dashboard">Dashboard</Link>
-                                </li>
-                            </>
-                        )}
+                    {user ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="gap-2 px-2 sm:px-4">
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <UserIcon className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <span className="hidden sm:inline-block font-medium">{user.username}</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => navigate(role === 'ADMIN' ? '/admin/dashboard' : role === 'STAFF' ? '/staff/dashboard' : '/my-bookings')}>
+                                    Dashboard
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={handleLogout}>
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    Logout
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <div className="hidden md:flex items-center gap-2">
+                            <Link to="/login">
+                                <Button variant="ghost">Login</Button>
+                            </Link>
+                            <Link to="/register">
+                                <Button>Join Now</Button>
+                            </Link>
+                        </div>
+                    )}
 
-                        {/* Admin Links */}
-                        {role === 'ADMIN' && (
-                            <>
-                                <li className="nav-item">
-                                    <Link className="nav-link px-3" to="/admin/dashboard">Admin Panel</Link>
-                                </li>
-                            </>
-                        )}
-
-                        <li className="nav-item">
-                            <Link className="nav-link px-3" to="/about">About Us</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link px-3" to="/customer-care">Support</Link>
-                        </li>
-                    </ul>
-
-                    <div className="d-flex align-items-center gap-2">
-                        {/* Theme Toggle Button */}
-                        <button
-                            className="btn btn-link text-muted p-2 me-2 fs-5 hover-scale"
-                            onClick={toggleTheme}
-                            title={`Switch to ${theme === 'dark-theme' ? 'Light' : 'Dark'} Mode`}
-                        >
-                            <i className={`bi bi-${theme === 'dark-theme' ? 'sun' : 'moon-stars'}-fill`}></i>
-                        </button>
-
-                        {user ? (
-                            <div className="d-flex align-items-center gap-3">
-                                <span className="text-muted small d-none d-lg-block">Welcome, <span className="text-adaptive fw-medium">{user.username}</span></span>
-                                <button className="btn btn-outline-danger btn-sm rounded-pill px-4" onClick={handleLogout}>Logout</button>
-                            </div>
-                        ) : (
-                            <div className="gap-3 d-flex align-items-center">
-                                <Link className="text-adaptive text-decoration-none fw-600 hover-opacity" to="/login">Login</Link>
-                                <Link className="btn btn-premium rounded-pill px-4" to="/register">Join Now</Link>
-                            </div>
-                        )}
+                    {/* Mobile Menu */}
+                    <div className="md:hidden">
+                        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Menu className="h-5 w-5" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right">
+                                <div className="flex flex-col gap-4 mt-8">
+                                    <NavItems />
+                                    {!user && (
+                                        <div className="flex flex-col gap-2 mt-4">
+                                            <Link to="/login" onClick={() => setIsOpen(false)}>
+                                                <Button variant="outline" className="w-full">Login</Button>
+                                            </Link>
+                                            <Link to="/register" onClick={() => setIsOpen(false)}>
+                                                <Button className="w-full">Join Now</Button>
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </div>
             </div>
-        </nav>
+        </header>
     );
 };
 

@@ -48,14 +48,16 @@ public class CarController {
     public ResponseEntity<List<com.example.demo.Entity.CarMaster>> getAvailableCars(
             @RequestParam int hubId,
             @RequestParam String startDate,
-            @RequestParam String endDate) {
+            @RequestParam String endDate,
+            @RequestParam(required = false) Long carTypeId) {
 
         System.out.println(
-                "DEBUG: getAvailableCars called with hubId=" + hubId + ", start=" + startDate + ", end=" + endDate);
+                "DEBUG: getAvailableCars called with hubId=" + hubId + ", start=" + startDate + ", end=" + endDate
+                        + ", carType=" + carTypeId);
         java.time.LocalDate start = java.time.LocalDate.parse(startDate);
         java.time.LocalDate end = java.time.LocalDate.parse(endDate);
 
-        List<com.example.demo.Entity.CarMaster> cars = carService.getAvailableCars(hubId, start, end);
+        List<com.example.demo.Entity.CarMaster> cars = carService.getAvailableCars(hubId, start, end, carTypeId);
         System.out.println("DEBUG: Found " + cars.size() + " cars.");
         return new ResponseEntity<>(cars, HttpStatus.OK);
     }

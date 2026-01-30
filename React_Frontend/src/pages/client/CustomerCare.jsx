@@ -1,4 +1,21 @@
 import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Mail,
+    Phone,
+    MapPin,
+    Send,
+    CheckCircle,
+    Facebook,
+    Twitter,
+    Instagram,
+    Linkedin,
+    HeadphonesIcon,
+    ArrowRight
+} from "lucide-react";
 
 const CustomerCare = () => {
     const [formData, setFormData] = useState({
@@ -15,112 +32,176 @@ const CustomerCare = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // In a real app, you'd send this to an API
         console.log('Support Query:', formData);
         setSubmitted(true);
         setFormData({ name: '', email: '', subject: '', message: '' });
     };
 
     return (
-        <div className="customer-care-page py-5">
-            <div className="container py-5">
-                <div className="text-center mb-5 animate-fade-in">
-                    <h1 className="display-4 fw-bold text-gradient mb-3">Customer Support</h1>
-                    <p className="lead text-muted mx-auto" style={{ maxWidth: '700px' }}>
-                        We're here to help you 24/7. Whether you have a question about our fleet, booking process, or need assistance during your journey, our team is just a message away.
+        <div className="min-h-screen bg-background py-20">
+            <div className="container mx-auto px-4">
+                <div className="max-w-4xl mx-auto text-center mb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6">
+                        <HeadphonesIcon className="h-4 w-4" /> 24/7 Concierge Support
+                    </div>
+                    <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-6">
+                        How can we <span className="text-primary italic">help you?</span>
+                    </h1>
+                    <p className="text-xl text-muted-foreground leading-relaxed">
+                        Our dedicated team is always on standby to ensure your journey is seamless.
+                        Whether it's fleet details, booking assistance, or on-the-road support, we're just a message away.
                     </p>
                 </div>
 
-                <div className="row g-5">
-                    <div className="col-lg-5 animate-slide-right">
-                        <div className="premium-card p-5 h-100 shadow-lg border-0 rounded-4">
-                            <h3 className="h4 fw-bold mb-4 text-primary">Contact Information</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 max-w-6xl mx-auto">
+                    {/* Contact Info Sidebar */}
+                    <div className="lg:col-span-5 space-y-8 animate-in fade-in slide-in-from-left-8 duration-700 delay-200">
+                        <Card className="border-none shadow-2xl bg-primary text-primary-foreground overflow-hidden">
+                            <CardContent className="p-10 relative">
+                                <div className="absolute -right-10 -bottom-10 opacity-10">
+                                    <HeadphonesIcon className="h-64 w-64" />
+                                </div>
+                                <h3 className="text-3xl font-black mb-10">Direct Reach</h3>
 
-                            <div className="d-flex align-items-center mb-4">
-                                <div className="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
-                                    <i className="bi bi-geo-alt fs-4 text-primary"></i>
-                                </div>
-                                <div>
-                                    <h6 className="mb-0 fw-bold">Headquarters</h6>
-                                    <p className="text-muted mb-0">123 IndiaDrive Tower, MG Road, Pune, Maharashtra</p>
-                                </div>
-                            </div>
+                                <div className="space-y-8">
+                                    <div className="flex gap-6 items-start">
+                                        <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md">
+                                            <MapPin className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Global HQ</p>
+                                            <p className="text-lg font-bold">123 IndiaDrive Tower, MG Road, Pune, MH</p>
+                                        </div>
+                                    </div>
 
-                            <div className="d-flex align-items-center mb-4">
-                                <div className="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
-                                    <i className="bi bi-telephone fs-4 text-primary"></i>
-                                </div>
-                                <div>
-                                    <h6 className="mb-0 fw-bold">Phone Support</h6>
-                                    <p className="text-muted mb-0">+91 1800-456-7890 (Toll Free)</p>
-                                </div>
-                            </div>
+                                    <div className="flex gap-6 items-start">
+                                        <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md">
+                                            <Phone className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Tele-Support</p>
+                                            <p className="text-lg font-bold">+91 1800-456-7890</p>
+                                            <p className="text-sm text-white/40 italic">Toll free within India</p>
+                                        </div>
+                                    </div>
 
-                            <div className="d-flex align-items-center mb-4">
-                                <div className="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
-                                    <i className="bi bi-envelope fs-4 text-primary"></i>
+                                    <div className="flex gap-6 items-start">
+                                        <div className="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 backdrop-blur-md">
+                                            <Mail className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Electronic Mail</p>
+                                            <p className="text-lg font-bold">support@indiadrive.com</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h6 className="mb-0 fw-bold">Email Us</h6>
-                                    <p className="text-muted mb-0">support@indiadrive.com</p>
-                                </div>
-                            </div>
 
-                            <div className="mt-5">
-                                <h6 className="fw-bold mb-3">Follow Us</h6>
-                                <div className="d-flex gap-3">
-                                    <button className="btn btn-outline-primary rounded-circle p-2" style={{ width: '45px', height: '45px' }}><i className="bi bi-facebook"></i></button>
-                                    <button className="btn btn-outline-primary rounded-circle p-2" style={{ width: '45px', height: '45px' }}><i className="bi bi-twitter-x"></i></button>
-                                    <button className="btn btn-outline-primary rounded-circle p-2" style={{ width: '45px', height: '45px' }}><i className="bi bi-instagram"></i></button>
-                                    <button className="btn btn-outline-primary rounded-circle p-2" style={{ width: '45px', height: '45px' }}><i className="bi bi-linkedin"></i></button>
+                                <div className="mt-16 pt-10 border-t border-white/10">
+                                    <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-6">Social Ecosystem</p>
+                                    <div className="flex gap-4">
+                                        {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
+                                            <Button key={i} size="icon" variant="ghost" className="rounded-xl h-12 w-12 bg-white/10 hover:bg-white hover:text-primary transition-all">
+                                                <Icon className="h-5 w-5" />
+                                            </Button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </CardContent>
+                        </Card>
                     </div>
 
-                    <div className="col-lg-7 animate-slide-left">
-                        <div className="premium-card p-5 shadow-lg border-0 rounded-4 bg-adaptive">
-                            {submitted ? (
-                                <div className="text-center py-5">
-                                    <div className="bg-success bg-opacity-10 p-4 rounded-circle d-inline-block mb-4">
-                                        <i className="bi bi-check-circle fs-1 text-success"></i>
+                    {/* Contact Form */}
+                    <div className="lg:col-span-7 animate-in fade-in slide-in-from-right-8 duration-700 delay-200">
+                        <Card className="border-none shadow-2xl bg-card border border-border/50">
+                            <CardContent className="p-10 md:p-12">
+                                {submitted ? (
+                                    <div className="text-center py-16 animate-in zoom-in-95 duration-500">
+                                        <div className="h-24 w-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                                            <CheckCircle className="h-12 w-12 text-primary" />
+                                        </div>
+                                        <h3 className="text-4xl font-black text-foreground mb-4">Transmission Successful</h3>
+                                        <p className="text-muted-foreground text-lg mb-10 max-w-sm mx-auto">
+                                            Your inquiry has been logged. Our dispatch team will revert within 2-4 hours.
+                                        </p>
+                                        <Button onClick={() => setSubmitted(false)} className="rounded-full px-10 h-14 font-bold text-lg">
+                                            New Transmission <ArrowRight className="ml-2 h-5 w-5" />
+                                        </Button>
                                     </div>
-                                    <h3 className="fw-bold text-success mb-3">Message Sent!</h3>
-                                    <p className="text-muted mb-4">Thank you for reaching out. Our support team will respond to your query at your email address within 2-4 hours.</p>
-                                    <button className="btn btn-premium rounded-pill px-5" onClick={() => setSubmitted(false)}>Send Another Message</button>
-                                </div>
-                            ) : (
-                                <>
-                                    <h3 className="h4 fw-bold mb-4">Send us a Message</h3>
-                                    <form onSubmit={handleSubmit}>
-                                        <div className="row">
-                                            <div className="col-md-6 mb-4">
-                                                <label className="form-label small fw-bold text-muted">Your Name</label>
-                                                <input type="text" className="form-control rounded-3" name="name" value={formData.name} onChange={handleChange} required />
+                                ) : (
+                                    <>
+                                        <div className="mb-10">
+                                            <h3 className="text-3xl font-black mb-2">Initialize Inquiry</h3>
+                                            <p className="text-muted-foreground text-lg">Send us a secure message encrypted via SSL.</p>
+                                        </div>
+
+                                        <form onSubmit={handleSubmit} className="space-y-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-3">
+                                                    <Label className="text-xs font-black uppercase text-muted-foreground flex items-center gap-2">
+                                                        Identity <span className="h-1 w-1 rounded-full bg-primary"></span>
+                                                    </Label>
+                                                    <Input
+                                                        className="h-14 rounded-2xl bg-muted/50 border-none focus-visible:ring-2 focus-visible:ring-primary transition-all text-lg font-medium"
+                                                        placeholder="Siddhartha Gupta"
+                                                        name="name"
+                                                        value={formData.name}
+                                                        onChange={handleChange}
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <Label className="text-xs font-black uppercase text-muted-foreground flex items-center gap-2">
+                                                        Channel <span className="h-1 w-1 rounded-full bg-primary"></span>
+                                                    </Label>
+                                                    <Input
+                                                        type="email"
+                                                        className="h-14 rounded-2xl bg-muted/50 border-none focus-visible:ring-2 focus-visible:ring-primary transition-all text-lg font-medium"
+                                                        placeholder="sid@example.com"
+                                                        name="email"
+                                                        value={formData.email}
+                                                        onChange={handleChange}
+                                                        required
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="col-md-6 mb-4">
-                                                <label className="form-label small fw-bold text-muted">Email Address</label>
-                                                <input type="email" className="form-control rounded-3" name="email" value={formData.email} onChange={handleChange} required />
+
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-black uppercase text-muted-foreground flex items-center gap-2">
+                                                    Inquiry Subject <span className="h-1 w-1 rounded-full bg-primary"></span>
+                                                </Label>
+                                                <Input
+                                                    className="h-14 rounded-2xl bg-muted/50 border-none focus-visible:ring-2 focus-visible:ring-primary transition-all text-lg font-medium"
+                                                    placeholder="Regarding Premium SUV availability in Pune"
+                                                    name="subject"
+                                                    value={formData.subject}
+                                                    onChange={handleChange}
+                                                    required
+                                                />
                                             </div>
-                                        </div>
 
-                                        <div className="mb-4">
-                                            <label className="form-label small fw-bold text-muted">Subject</label>
-                                            <input type="text" className="form-control rounded-3" name="subject" value={formData.subject} onChange={handleChange} required />
-                                        </div>
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-black uppercase text-muted-foreground flex items-center gap-2">
+                                                    Brief Transcript <span className="h-1 w-1 rounded-full bg-primary"></span>
+                                                </Label>
+                                                <textarea
+                                                    className="w-full h-40 rounded-[2rem] bg-muted/50 border-none focus:ring-2 focus:ring-primary p-6 transition-all text-lg font-medium resize-none"
+                                                    placeholder="Specify your requirements or issues here..."
+                                                    name="message"
+                                                    value={formData.message}
+                                                    onChange={handleChange}
+                                                    required
+                                                />
+                                            </div>
 
-                                        <div className="mb-4">
-                                            <label className="form-label small fw-bold text-muted">Your Message</label>
-                                            <textarea className="form-control rounded-3" rows="5" name="message" value={formData.message} onChange={handleChange} required></textarea>
-                                        </div>
-
-                                        <button type="submit" className="btn btn-premium btn-lg w-100 rounded-pill shadow-glow">
-                                            <i className="bi bi-send-fill me-2"></i> Submit Inquiry
-                                        </button>
-                                    </form>
-                                </>
-                            )}
-                        </div>
+                                            <Button type="submit" className="w-full h-16 rounded-[2rem] text-xl font-black shadow-2xl shadow-primary/30 group">
+                                                Relay Message
+                                                <Send className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                                            </Button>
+                                        </form>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>

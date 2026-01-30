@@ -44,7 +44,7 @@ public class CarService {
     }
 
     public List<com.example.demo.Entity.CarMaster> getAvailableCars(int hubId, java.time.LocalDate startDate,
-            java.time.LocalDate endDate) {
-        return carRepository.findAvailableCars(hubId, startDate, endDate);
+            java.time.LocalDate endDate, Long carTypeId) {
+        return carRepository.findAvailableCars(hubId, startDate, endDate, carTypeId);
     }
 }
