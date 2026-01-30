@@ -18,40 +18,40 @@ import lombok.Data;
 @Table(name = "car_master")
 @Data
 public class CarMaster {
-	
+
 	@Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "car_id")
-    private int carId;
-	
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "car_id")
+	private int carId;
+
 	@ManyToOne
-    @JoinColumn(name = "cartype_id")
-    private CarTypeMaster carType;
-	
+	@JoinColumn(name = "cartype_id")
+	private CarTypeMaster carType;
+
 	@Column(name = "car_name")
-    private String carName;
+	private String carName;
 
-    @Column(name = "number_plate", unique = true, length = 50)
-    private String numberPlate;
+	@Column(name = "number_plate", unique = true, length = 50)
+	private String numberPlate;
 
-    @Column(name = "status")
-    private String Status;
+	@Column(name = "status")
+	private String Status;
 
-    @Column(name = "mileage")
-    private double mileage;
+	@Column(name = "mileage")
+	private double mileage;
 
-    @ManyToOne
-    @JoinColumn(name = "hub_id")
-    private HubMaster hub;
+	@ManyToOne
+	@JoinColumn(name = "hub_id")
+	private HubMaster hub;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "is_available")
-    private AvailabilityStatus isAvailable;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "is_available")
+	private AvailabilityStatus isAvailable;
 
-    @Column(name = "maintenance_due_date")
-    private Date maintenanceDueDate;
+	@Column(name = "maintenance_due_date")
+	private Date maintenanceDueDate;
 
-    public int getCarId() {
+	public int getCarId() {
 		return carId;
 	}
 
@@ -124,10 +124,7 @@ public class CarMaster {
 	}
 
 	public enum AvailabilityStatus {
-        Y, N
-    }
-	
-	
+		Y, N
+	}
 
 }
-

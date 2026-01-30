@@ -60,4 +60,3 @@ public class CarController {
         return new ResponseEntity<>(cars, HttpStatus.OK);
     }
 }
-

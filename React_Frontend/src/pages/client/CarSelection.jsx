@@ -93,7 +93,7 @@ const CarSelection = () => {
                                 <div className="premium-card h-100 p-0 overflow-hidden shadow-premium border-0">
                                     <div className="position-relative">
                                         <img
-                                            src={car.imagePath || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=500&q=60'}
+                                            src={car.carType?.imagePath ? (car.carType.imagePath.startsWith('/') ? car.carType.imagePath : `/${car.carType.imagePath}`) : 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=500&q=60'}
                                             alt={car.carModel}
                                             className="w-100 h-100 object-fit-cover"
                                             style={{ height: '220px' }}
