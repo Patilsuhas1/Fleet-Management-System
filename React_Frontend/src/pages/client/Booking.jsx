@@ -72,6 +72,52 @@ const Booking = () => {
 
     // UI States
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
+
+    const validateCustomerForm = () => {
+        const newErrors = {};
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (!customer.firstName || customer.firstName.trim().length < 2) newErrors.firstName = "First name is required (min 2 chars)";
+        if (!customer.lastName || customer.lastName.trim().length < 2) newErrors.lastName = "Last name is required (min 2 chars)";
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!customer.email || !emailRegex.test(customer.email)) newErrors.email = "Valid email is required";
+
+        const mobileRegex = /^\d{10}$/;
+        if (!customer.mobileNumber || !mobileRegex.test(customer.mobileNumber)) newErrors.mobileNumber = "Valid 10-digit mobile number is required";
+
+        if (!customer.dateOfBirth) {
+            newErrors.dateOfBirth = "Date of Birth is required";
+        } else {
+            const dob = new Date(customer.dateOfBirth);
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            if (age < 18) newErrors.dateOfBirth = "You must be at least 18 years old";
+        }
+
+        if (!customer.drivingLicenseNumber) newErrors.drivingLicenseNumber = "License number is required";
+        if (!customer.issuedByDL) newErrors.issuedByDL = "Issued By is required";
+
+        if (!customer.validThroughDL) {
+            newErrors.validThroughDL = "License expiry date is required";
+        } else if (new Date(customer.validThroughDL) < today) {
+            newErrors.validThroughDL = "License has expired";
+        }
+
+        if (!customer.creditCardNumber || !/^\d{16}$/.test(customer.creditCardNumber.replace(/\s/g, ''))) {
+            newErrors.creditCardNumber = "Valid 16-digit card number is required";
+        }
+
+        if (!customer.addressLine1) newErrors.addressLine1 = "Address is required";
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     useEffect(() => {
         loadStates();
@@ -193,7 +239,32 @@ const Booking = () => {
 
     // const handleSearchLocation = async (e) => { ... } // Removed unused function
 
+    const validateSearch = () => {
+        if (!dates.startDate || !dates.endDate) {
+            alert("Please select both Pickup and Return dates.");
+            return false;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const start = new Date(dates.startDate);
+        const end = new Date(dates.endDate);
+
+        if (start < today) {
+            alert("Pickup date cannot be in the past.");
+            return false;
+        }
+
+        if (end <= start) {
+            alert("Return date must be after the pickup date.");
+            return false;
+        }
+
+        return true;
+    };
+
     const searchByAirport = async () => {
+        if (!validateSearch()) return;
         if (!airportCode) {
             alert("Enter airport code");
             return;
@@ -219,6 +290,7 @@ const Booking = () => {
 
     const searchByCity = (e) => {
         e.preventDefault();
+        if (!validateSearch()) return;
         if (!selectedState || (!selectedCity && cities.length > 0)) {
             alert('Please select state and city');
             return;
@@ -247,6 +319,10 @@ const Booking = () => {
 
     const handleSaveCustomer = async (e) => {
         e.preventDefault();
+        if (!validateCustomerForm()) {
+            // Scroll to top of form or first error could be good, but for now just stop
+            return;
+        }
         try {
             setLoading(true);
             const response = await ApiService.saveCustomer(customer);
@@ -334,11 +410,23 @@ const Booking = () => {
                             <div className="row g-3 mb-4">
                                 <div className="col-md-6">
                                     <label className="form-label text-muted small uppercase">Pick-Up Date</label>
-                                    <input type="date" className="form-control" onChange={e => setDates({ ...dates, startDate: e.target.value })} required />
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        min={new Date().toISOString().split('T')[0]}
+                                        onChange={e => setDates({ ...dates, startDate: e.target.value })}
+                                        required
+                                    />
                                 </div>
                                 <div className="col-md-6">
                                     <label className="form-label text-muted small uppercase">Return Date</label>
-                                    <input type="date" className="form-control" onChange={e => setDates({ ...dates, endDate: e.target.value })} required />
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        min={dates.startDate || new Date().toISOString().split('T')[0]}
+                                        onChange={e => setDates({ ...dates, endDate: e.target.value })}
+                                        required
+                                    />
                                 </div>
                             </div>
 
@@ -518,69 +606,82 @@ const Booking = () => {
                                             required
                                             readOnly={!!currentUser}
                                         />
+                                        {errors.email && <small className="text-danger">{errors.email}</small>}
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label text-muted small">First Name</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
                                             value={customer.firstName || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, firstName: val }));
+                                                if (errors.firstName) setErrors({ ...errors, firstName: '' });
                                             }}
                                             required
                                         />
+                                        {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label text-muted small">Last Name</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${errors.lastName ? 'is-invalid' : ''}`}
                                             value={customer.lastName || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, lastName: val }));
+                                                if (errors.lastName) setErrors({ ...errors, lastName: '' });
                                             }}
                                             required
                                         />
+                                        {errors.lastName && <div className="invalid-feedback">{errors.lastName}</div>}
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label text-muted small">Mobile</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${errors.mobileNumber ? 'is-invalid' : ''}`}
                                             value={customer.mobileNumber || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, mobileNumber: val }));
+                                                if (errors.mobileNumber) setErrors({ ...errors, mobileNumber: '' });
                                             }}
                                             required
+                                            placeholder="10 digit number"
                                         />
+                                        {errors.mobileNumber && <div className="invalid-feedback">{errors.mobileNumber}</div>}
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label text-muted small">Date of Birth</label>
                                         <input
                                             type="date"
-                                            className="form-control"
+                                            className={`form-control ${errors.dateOfBirth ? 'is-invalid' : ''}`}
                                             value={customer.dateOfBirth || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, dateOfBirth: val }));
+                                                if (errors.dateOfBirth) setErrors({ ...errors, dateOfBirth: '' });
                                             }}
+                                            max={new Date().toISOString().split('T')[0]}
                                         />
+                                        {errors.dateOfBirth && <div className="invalid-feedback">{errors.dateOfBirth}</div>}
                                     </div>
                                     <div className="col-md-12">
                                         <label className="form-label text-muted small">Address</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${errors.addressLine1 ? 'is-invalid' : ''}`}
                                             value={customer.addressLine1 || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, addressLine1: val }));
+                                                if (errors.addressLine1) setErrors({ ...errors, addressLine1: '' });
                                             }}
                                         />
+                                        {errors.addressLine1 && <div className="invalid-feedback">{errors.addressLine1}</div>}
                                     </div>
 
                                     <h5 className="fw-bold mt-5 mb-2 text-primary">Identification</h5>
@@ -588,37 +689,44 @@ const Booking = () => {
                                         <label className="form-label text-muted small">License No</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${errors.drivingLicenseNumber ? 'is-invalid' : ''}`}
                                             value={customer.drivingLicenseNumber || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, drivingLicenseNumber: val }));
+                                                if (errors.drivingLicenseNumber) setErrors({ ...errors, drivingLicenseNumber: '' });
                                             }}
                                         />
+                                        {errors.drivingLicenseNumber && <div className="invalid-feedback">{errors.drivingLicenseNumber}</div>}
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label text-muted small">Issued By</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${errors.issuedByDL ? 'is-invalid' : ''}`}
                                             value={customer.issuedByDL || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, issuedByDL: val }));
+                                                if (errors.issuedByDL) setErrors({ ...errors, issuedByDL: '' });
                                             }}
                                         />
+                                        {errors.issuedByDL && <div className="invalid-feedback">{errors.issuedByDL}</div>}
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label text-muted small">Valid Thru</label>
                                         <input
                                             type="date"
-                                            className="form-control"
+                                            className={`form-control ${errors.validThroughDL ? 'is-invalid' : ''}`}
                                             value={customer.validThroughDL || ''}
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 setCustomer(prev => ({ ...prev, validThroughDL: val }));
+                                                if (errors.validThroughDL) setErrors({ ...errors, validThroughDL: '' });
                                             }}
+                                            min={new Date().toISOString().split('T')[0]}
                                         />
+                                        {errors.validThroughDL && <div className="invalid-feedback">{errors.validThroughDL}</div>}
                                     </div>
 
                                     <h5 className="fw-bold mt-5 mb-2 text-primary">Payment Information</h5>
@@ -641,14 +749,17 @@ const Booking = () => {
                                         <label className="form-label text-muted small">Card Number</label>
                                         <input
                                             type="text"
-                                            className="form-control"
+                                            className={`form-control ${errors.creditCardNumber ? 'is-invalid' : ''}`}
                                             value={customer.creditCardNumber || ''}
                                             onChange={e => {
-                                                const val = e.target.value;
+                                                const val = e.target.value.replace(/\D/g, '').slice(0, 16); // Only allow digits, max 16
                                                 setCustomer(prev => ({ ...prev, creditCardNumber: val }));
+                                                if (errors.creditCardNumber) setErrors({ ...errors, creditCardNumber: '' });
                                             }}
                                             required
+                                            placeholder="16-digit card number"
                                         />
+                                        {errors.creditCardNumber && <div className="invalid-feedback">{errors.creditCardNumber}</div>}
                                     </div>
                                 </div>
 

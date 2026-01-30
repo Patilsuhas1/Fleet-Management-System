@@ -11,19 +11,51 @@ const Register = () => {
         role: 'CUSTOMER'
     });
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        // Clear error for this field when user types
+        if (fieldErrors[e.target.name]) {
+            setFieldErrors({ ...fieldErrors, [e.target.name]: '' });
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        // Password: At least 8 chars, at least one special character
+        const passwordRegex = /^(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
+
+        if (!formData.username || formData.username.trim().length < 3) {
+            newErrors.username = "Username must be at least 3 characters long.";
+        }
+
+        if (!formData.email || !emailRegex.test(formData.email)) {
+            newErrors.email = "Please enter a valid email address.";
+        }
+
+        if (!formData.password) {
+            newErrors.password = "Password is required.";
+        } else if (!passwordRegex.test(formData.password)) {
+            newErrors.password = "Password must be at least 8 characters and contain at least one special character (!@#$%^&*).";
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = "Passwords do not match.";
+        }
+
+        setFieldErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setError('');
 
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+        if (!validateForm()) {
             return;
         }
 
@@ -76,6 +108,7 @@ const Register = () => {
                                             />
                                             <label htmlFor="username">Username</label>
                                         </div>
+                                        {fieldErrors.username && <small className="text-danger ps-2 animate-fade-in">{fieldErrors.username}</small>}
                                     </div>
                                     <div className="col-md-6 mb-4">
                                         <div className="form-floating">
@@ -90,6 +123,7 @@ const Register = () => {
                                             />
                                             <label htmlFor="email">Email Address</label>
                                         </div>
+                                        {fieldErrors.email && <small className="text-danger ps-2 animate-fade-in">{fieldErrors.email}</small>}
                                     </div>
                                 </div>
 
@@ -107,6 +141,7 @@ const Register = () => {
                                             />
                                             <label htmlFor="password">Password</label>
                                         </div>
+                                        {fieldErrors.password && <small className="text-danger ps-2 animate-fade-in">{fieldErrors.password}</small>}
                                     </div>
                                     <div className="col-md-6 mb-4">
                                         <div className="form-floating">
@@ -121,6 +156,7 @@ const Register = () => {
                                             />
                                             <label htmlFor="confirmPassword">Confirm Password</label>
                                         </div>
+                                        {fieldErrors.confirmPassword && <small className="text-danger ps-2 animate-fade-in">{fieldErrors.confirmPassword}</small>}
                                     </div>
                                 </div>
 

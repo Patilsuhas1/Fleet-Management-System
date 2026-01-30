@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
 import Home from './pages/client/Home';
 import About from './pages/client/About';
 import Login from './pages/auth/Login';
@@ -54,6 +55,7 @@ function App() {
           <Route path="/admin/staff" element={<StaffManagement />} />
         </Routes>
       </div>
+      <Footer />
     </Router>
   );
 }

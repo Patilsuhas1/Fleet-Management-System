@@ -180,22 +180,7 @@ const StaffDashboard = () => {
                                     {message.text && (
                                         <div className={`alert alert-${message.type} mb-5 glass-effect border-0 rounded-4 p-3 d-flex justify-content-between align-items-center`}>
                                             <span className="fw-medium px-3">{message.text}</span>
-                                            {message.downloadId && (
-                                                <button className="btn btn-premium btn-sm rounded-pill"
-                                                    onClick={async () => {
-                                                        try {
-                                                            const blob = await ApiService.downloadInvoice(message.downloadId);
-                                                            const url = window.URL.createObjectURL(new Blob([blob]));
-                                                            const link = document.createElement('a');
-                                                            link.href = url;
-                                                            link.setAttribute('download', `Invoice_${message.downloadId}.pdf`);
-                                                            document.body.appendChild(link);
-                                                            link.click();
-                                                        } catch (e) { alert('Download failed'); }
-                                                    }}>
-                                                    <i className="bi bi-download me-1"></i> Get Invoice (₹)
-                                                </button>
-                                            )}
+
                                         </div>
                                     )}
 
