@@ -77,4 +77,41 @@
   .text-adaptive {
     @apply text-foreground;
   }
+
+  .glass {
+    @apply bg-background/60 backdrop-blur-lg border border-white/20;
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-x 5s ease infinite;
+  }
+
+  @keyframes gradient-x {
+
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full border-4 border-muted hover:bg-primary/50 transition-colors;
 }

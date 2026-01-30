@@ -56,9 +56,12 @@ const Navbar = ({ theme, toggleTheme }) => {
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between">
-                <Link className="flex items-center gap-2 font-bold text-xl" to="/">
-                    <Shield className="h-6 w-6 text-primary filled-current" />
-                    <span className="bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">IndiaDrive</span>
+                <Link className="flex items-center gap-2 font-bold text-xl group" to="/">
+                    <div className="relative">
+                        <Shield className="h-6 w-6 text-primary filled-current relative z-10 transition-transform duration-300 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-primary/40 blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+                    <span className="bg-gradient-to-r from-primary via-blue-500 to-indigo-600 bg-clip-text text-transparent group-hover:opacity-80 transition-opacity">IndiaDrive</span>
                 </Link>
 
                 {/* Desktop Navigation */}
