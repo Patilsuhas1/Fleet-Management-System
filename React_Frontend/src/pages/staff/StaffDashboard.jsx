@@ -84,9 +84,10 @@ const StaffDashboard = () => {
         try {
             // Extract hubId and carTypeId from bookingDetails (using new flat fields from DTO)
             const hubId = bookingDetails.pickupHubId || 1;
-            const carTypeId = bookingDetails.carTypeId || null;
+            // WE IGNORE carTypeId here to allow staff to see ALL available cars (for upgrades/substitutions)
+            // const carTypeId = bookingDetails.carTypeId || null; 
 
-            const cars = await ApiService.getAvailableCars(hubId, bookingDetails.startDate, bookingDetails.endDate, carTypeId);
+            const cars = await ApiService.getAvailableCars(hubId, bookingDetails.startDate, bookingDetails.endDate, null);
             setAvailableCars(cars || []);
             setShowCarSelection(true);
         } catch (err) {

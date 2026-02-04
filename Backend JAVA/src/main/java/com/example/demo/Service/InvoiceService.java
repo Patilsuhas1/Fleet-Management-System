@@ -14,7 +14,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.BaseColor;
-import java.time.format.DateTimeFormatter;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -71,184 +71,233 @@ public class InvoiceService {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // Colors
-            BaseColor primaryBlue = new BaseColor(37, 99, 235); // Modern Blue
-            BaseColor lightGray = new BaseColor(249, 250, 251);
-            BaseColor textDark = new BaseColor(31, 41, 55);
-            BaseColor textMuted = new BaseColor(107, 114, 128);
+            // --- FONTS & COLORS ---
+            BaseColor colorPrimary = new BaseColor(63, 81, 181); // Indigo
 
-            // Font Definitions
-            Font titleFont = new Font(Font.FontFamily.HELVETICA, 24, Font.BOLD, primaryBlue);
-            Font subtitleFont = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, textMuted);
-            Font sectionHeaderFont = new Font(Font.FontFamily.HELVETICA, 11, Font.BOLD, textDark);
-            Font bodyFont = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, textDark);
-            Font bodyBoldFont = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, textDark);
-            Font footerFont = new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL, textMuted);
+            BaseColor colorText = new BaseColor(50, 50, 50); // Dark Gray
 
-            // Title Section
-            Paragraph mainTitle = new Paragraph("Trip Summary", titleFont);
-            mainTitle.setAlignment(Element.ALIGN_CENTER);
-            document.add(mainTitle);
+            Font fontLogo = new Font(Font.FontFamily.HELVETICA, 26, Font.BOLD, colorPrimary);
+            Font fontHeader = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, BaseColor.WHITE);
+            Font fontLabel = new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD, colorText);
+            Font fontValue = new Font(Font.FontFamily.HELVETICA, 10, Font.NORMAL, colorText);
 
-            Paragraph reference = new Paragraph("REFERENCE: #" + booking.getBookingId(), subtitleFont);
-            reference.setAlignment(Element.ALIGN_CENTER);
-            reference.setSpacingAfter(25f);
-            document.add(reference);
+            Font fontSmall = new Font(Font.FontFamily.HELVETICA, 8, Font.NORMAL, BaseColor.GRAY);
 
-            // Main Content Layout (Fleet & Hub / Schedule)
-            PdfPTable mainGrid = new PdfPTable(2);
-            mainGrid.setWidthPercentage(100);
-            mainGrid.setSpacingAfter(20f);
-            mainGrid.setWidths(new float[] { 1.2f, 1f });
+            // --- HEADER SECTION ---
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setWidths(new float[] { 1, 1 });
 
-            // Left Column: Fleet & Hub
-            PdfPCell leftCol = new PdfPCell();
-            leftCol.setBorder(PdfPCell.NO_BORDER);
-            leftCol.setPaddingRight(15f);
+            // Company Logo/Name
+            PdfPCell companyCell = new PdfPCell();
+            companyCell.setBorder(PdfPCell.NO_BORDER);
+            companyCell.addElement(new Paragraph("FLEEMAN", fontLogo));
+            companyCell.addElement(new Paragraph("123, Innovation Dr.", fontValue));
+            companyCell.addElement(new Paragraph("Tech City, TC 560001", fontValue));
+            companyCell.addElement(new Paragraph("support@fleeman.com", fontValue));
+            headerTable.addCell(companyCell);
 
-            // Fleet Box
-            leftCol.addElement(new Paragraph("SELECTED FLEET", footerFont));
-            String carInfo = booking.getBookcar();
-            String carType = booking.getCarType() != null ? booking.getCarType().getCarTypeName() : "Vehicle";
-            leftCol.addElement(new Paragraph(carType + " - " + carInfo, bodyBoldFont));
-            leftCol.addElement(new Paragraph("Automatic • Petrol • 5 Seats", footerFont)); // Generic placeholders if
-                                                                                           // not info
-            leftCol.addElement(new Paragraph(" ", bodyFont));
+            // Invoice Title & Details
+            PdfPCell invoiceDetailsCell = new PdfPCell();
+            invoiceDetailsCell.setBorder(PdfPCell.NO_BORDER);
+            invoiceDetailsCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            Paragraph invoiceTitle = new Paragraph("INVOICE",
+                    new Font(Font.FontFamily.HELVETICA, 24, Font.BOLD, BaseColor.LIGHT_GRAY));
+            invoiceTitle.setAlignment(Element.ALIGN_RIGHT);
+            invoiceDetailsCell.addElement(invoiceTitle);
 
-            // Hub Box
-            leftCol.addElement(new Paragraph("OPERATION HUB", footerFont));
-            if (booking.getPickupHub() != null) {
-                leftCol.addElement(new Paragraph(booking.getPickupHub().getHubName(), bodyBoldFont));
-                leftCol.addElement(new Paragraph(booking.getPickupHub().getHubAddressAndDetails(), subtitleFont));
-            } else {
-                leftCol.addElement(new Paragraph("Main Station", bodyBoldFont));
-            }
-            mainGrid.addCell(leftCol);
+            PdfPTable detailsTable = new PdfPTable(2);
+            detailsTable.setWidthPercentage(100);
+            detailsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
-            // Right Column: Schedule Box
-            PdfPCell scheduleBox = new PdfPCell();
-            scheduleBox.setBackgroundColor(lightGray);
-            scheduleBox.setPadding(15f);
-            scheduleBox.setBorder(PdfPCell.NO_BORDER);
+            addDetailRow(detailsTable, "Invoice #:", "INV-" + booking.getBookingId(), fontLabel, fontValue);
+            addDetailRow(detailsTable, "Date:", LocalDate.now().toString(), fontLabel, fontValue);
+            addDetailRow(detailsTable, "Booking Ref:",
+                    booking.getConfirmationNumber() != null ? booking.getConfirmationNumber() : "N/A", fontLabel,
+                    fontValue);
 
-            Paragraph schedTitle = new Paragraph("RENTAL SCHEDULE", footerFont);
-            schedTitle.setAlignment(Element.ALIGN_CENTER);
-            scheduleBox.addElement(schedTitle);
-            scheduleBox.addElement(new Paragraph(" ", bodyFont));
+            invoiceDetailsCell.addElement(detailsTable);
+            headerTable.addCell(invoiceDetailsCell);
 
-            Paragraph pickupLabel = new Paragraph("Pickup", footerFont);
-            pickupLabel.setAlignment(Element.ALIGN_CENTER);
-            scheduleBox.addElement(pickupLabel);
-            Paragraph pickupDate = new Paragraph(booking.getStartDate() != null
-                    ? booking.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                    : "N/A", bodyBoldFont);
-            pickupDate.setAlignment(Element.ALIGN_CENTER);
-            scheduleBox.addElement(pickupDate);
+            document.add(headerTable);
+            document.add(new Paragraph("\n")); // Spacer
 
-            scheduleBox.addElement(new Paragraph(" ", bodyFont));
+            // --- BILL TO & TRIP DETAILS ---
+            PdfPTable infoTable = new PdfPTable(2);
+            infoTable.setWidthPercentage(100);
+            infoTable.setWidths(new float[] { 1, 1 });
+            infoTable.setSpacingAfter(20f);
 
-            Paragraph returnLabel = new Paragraph("Return", footerFont);
-            returnLabel.setAlignment(Element.ALIGN_CENTER);
-            scheduleBox.addElement(returnLabel);
-            LocalDate endDate = booking.getEndDate();
-            if (booking.getReturnTime() != null)
-                endDate = booking.getReturnTime().toLocalDate();
-            Paragraph returnDate = new Paragraph(
-                    endDate != null ? endDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "N/A", bodyBoldFont);
-            returnDate.setAlignment(Element.ALIGN_CENTER);
-            scheduleBox.addElement(returnDate);
+            // Bill To
+            PdfPCell billToCell = new PdfPCell();
+            billToCell.setBorder(PdfPCell.NO_BORDER);
+            billToCell.addElement(new Paragraph("BILL TO", fontSmall));
+            billToCell.addElement(new Paragraph(booking.getFirstName() + " " + booking.getLastName(),
+                    new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, colorText)));
+            billToCell.addElement(new Paragraph(booking.getAddress() + ", " + booking.getState(), fontValue));
+            billToCell.addElement(new Paragraph(booking.getEmailId(), fontValue));
+            infoTable.addCell(billToCell);
 
-            mainGrid.addCell(scheduleBox);
+            // Trip Details
+            PdfPCell tripCell = new PdfPCell();
+            tripCell.setBorder(PdfPCell.NO_BORDER);
+            tripCell.addElement(new Paragraph("TRIP DETAILS", fontSmall));
+            String carName = booking.getBookcar() != null ? booking.getBookcar()
+                    : (booking.getCarType() != null ? booking.getCarType().getCarTypeName() : "Vehicle");
+            tripCell.addElement(new Paragraph("Vehicle: " + carName, fontValue));
 
-            document.add(mainGrid);
+            String pickup = booking.getStartDate() != null ? booking.getStartDate().toString() : "N/A";
+            String dropoff = booking.getEndDate() != null ? booking.getEndDate().toString() : "N/A";
 
-            // Financial Overview Section
-            Paragraph finHeader = new Paragraph("Financial Overview", sectionHeaderFont);
-            finHeader.setSpacingBefore(10f);
-            finHeader.setSpacingAfter(15f);
-            document.add(finHeader);
+            if (booking.getPickupHub() != null)
+                pickup += " (" + booking.getPickupHub().getHubName() + ")";
+            tripCell.addElement(new Paragraph("Pickup: " + pickup, fontValue));
+            tripCell.addElement(new Paragraph("Return: " + dropoff, fontValue));
+            infoTable.addCell(tripCell);
 
-            // Calculation Logic
+            document.add(infoTable);
+
+            // --- INVOICE ITEMS TABLE ---
+            PdfPTable table = new PdfPTable(4);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[] { 4, 1, 2, 2 }); // Description, Qty, Rate, Total
+            table.setHeaderRows(1);
+
+            // Table Header
+            addTableHeader(table, "DESCRIPTION", fontHeader, colorPrimary);
+            addTableHeader(table, "DAYS", fontHeader, colorPrimary);
+            addTableHeader(table, "RATE", fontHeader, colorPrimary);
+            addTableHeader(table, "AMOUNT", fontHeader, colorPrimary);
+
+            // Calculations
             long days = 1;
-            if (booking.getStartDate() != null && endDate != null) {
-                days = java.time.temporal.ChronoUnit.DAYS.between(booking.getStartDate(), endDate);
-                days = days + 1; // Inclusive of start and end date (e.g., Same day = 1, Next day = 2)
+            if (booking.getStartDate() != null && booking.getEndDate() != null) {
+                days = java.time.temporal.ChronoUnit.DAYS.between(booking.getStartDate(), booking.getEndDate());
+                if (days == 0)
+                    days = 1; // Minimum 1 day
+                else
+                    days += 1; // Inclusive (usually rental logic)
+            }
+            double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
+            double rentalTotal = days * dailyRate;
+
+            // Row 1: Vehicle Rental
+            addTableRow(table, "Vehicle Rental Charges - " + carName, String.valueOf(days), formatCurrency(dailyRate),
+                    formatCurrency(rentalTotal), fontValue);
+
+            // Add-ons
+            double addonsTotal = 0.0;
+            var addons = bookingDetailRepository.findByBooking_BookingId(bookingId);
+            for (BookingDetailTable addon : addons) {
+                double addonRate = addon.getAddonRate();
+                double lineTotal = addonRate * days; // Assuming per-day addon rate
+                addonsTotal += lineTotal;
+
+                String addonName = "Add-on Service"; // Generic name since details seem to be in detail table
+
+                addTableRow(table, addonName, String.valueOf(days), formatCurrency(addonRate),
+                        formatCurrency(lineTotal), fontValue);
             }
 
-            double dailyRate = booking.getDailyRate() != null ? booking.getDailyRate() : 0.0;
-            double rentalSubtotal = days * dailyRate;
-            double totalAddonDailyRate = bookingDetailRepository.findByBooking_BookingId(bookingId)
-                    .stream()
-                    .mapToDouble(BookingDetailTable::getAddonRate)
-                    .sum();
-            double addonAmt = totalAddonDailyRate * days;
-            double totalAmount = rentalSubtotal + addonAmt;
+            // Totals
+            double subtotal = rentalTotal + addonsTotal;
+            double taxRate = 0.18;
+            double taxAmount = subtotal * taxRate;
+            double grandTotal = subtotal + taxAmount;
 
-            // Finance Table
-            PdfPTable finTable = new PdfPTable(2);
-            finTable.setWidthPercentage(100);
-            finTable.setWidths(new float[] { 2, 1 });
+            document.add(table);
 
-            // Duration
-            finTable.addCell(createCleanCell("DURATION", footerFont, Element.ALIGN_LEFT));
-            finTable.addCell(createCleanCell(days + " Days", bodyBoldFont, Element.ALIGN_RIGHT));
+            // --- TOTALS SECTION ---
+            PdfPTable totalTable = new PdfPTable(2);
+            totalTable.setWidthPercentage(100);
+            totalTable.setWidths(new float[] { 3, 1 });
+            totalTable.setSpacingBefore(10f);
 
-            // Base Rental
-            finTable.addCell(
-                    createCleanCell("BASE RENTAL (" + days + "D)\n" + String.format("%.2f", dailyRate) + "/day",
-                            subtitleFont, Element.ALIGN_LEFT));
-            finTable.addCell(
-                    createCleanCell("₹" + String.format("%,.0f", rentalSubtotal), bodyBoldFont, Element.ALIGN_RIGHT));
+            addTotalRow(totalTable, "Subtotal:", formatCurrency(subtotal), fontLabel, fontValue);
+            addTotalRow(totalTable, "Tax (18% GST):", formatCurrency(taxAmount), fontLabel, fontValue);
+            addTotalRow(totalTable, "GRAND TOTAL:", formatCurrency(grandTotal),
+                    new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, colorPrimary),
+                    new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD, colorPrimary));
 
-            // Addons
-            finTable.addCell(createCleanCell("ADD-ON SERVICES", footerFont, Element.ALIGN_LEFT));
-            finTable.addCell(
-                    createCleanCell("₹" + String.format("%,.0f", addonAmt), bodyBoldFont, Element.ALIGN_RIGHT));
+            document.add(totalTable);
 
-            // Separator
-            PdfPCell separator = new PdfPCell();
-            separator.setColspan(2);
-            separator.setBorder(PdfPCell.BOTTOM);
-            separator.setBorderColor(lightGray);
-            separator.setFixedHeight(10f);
-            finTable.addCell(separator);
+            // --- FOOTER ---
+            document.add(new Paragraph("\n\n"));
+            Paragraph footer = new Paragraph("Thank you for your business!", fontLabel);
+            footer.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer);
 
-            // Total Amount
-            finTable.addCell(createCleanCell("AMOUNT PAID", bodyBoldFont, Element.ALIGN_LEFT));
-            PdfPCell totalValCell = createCleanCell("₹" + String.format("%,.0f", totalAmount), titleFont,
-                    Element.ALIGN_RIGHT);
-            finTable.addCell(totalValCell);
-
-            document.add(finTable);
-
-            // Final Footer
-            document.add(new Paragraph("\n\n\n"));
-            Paragraph footerNote = new Paragraph("Thank you for choosing IndiaDrive!\nSafe Travels.", bodyFont);
-            footerNote.setAlignment(Element.ALIGN_CENTER);
-            document.add(footerNote);
-
-            Paragraph computerGen = new Paragraph(
-                    "This is a computer generated invoice and does not require a signature.", footerFont);
-            computerGen.setAlignment(Element.ALIGN_CENTER);
-            computerGen.setSpacingBefore(10f);
-            document.add(computerGen);
+            Paragraph terms = new Paragraph(
+                    "Terms & Conditions: Payment is due within 15 days. \nFor support, contact support@fleeman.com.",
+                    fontSmall);
+            terms.setAlignment(Element.ALIGN_CENTER);
+            document.add(terms);
 
             document.close();
 
         } catch (DocumentException e) {
-            throw new RuntimeException("Error generating Trip Summary PDF: " + e.getMessage());
+            throw new RuntimeException("Error generating Invoice PDF: " + e.getMessage());
         }
 
         return out.toByteArray();
     }
 
-    private PdfPCell createCleanCell(String text, Font font, int alignment) {
-        PdfPCell cell = new PdfPCell(new Paragraph(text, font));
-        cell.setBorder(PdfPCell.NO_BORDER);
-        cell.setPaddingTop(8f);
-        cell.setPaddingBottom(8f);
-        cell.setHorizontalAlignment(alignment);
-        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        return cell;
+    private void addDetailRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
+        PdfPCell labelCell = new PdfPCell(new Paragraph(label, labelFont));
+        labelCell.setBorder(PdfPCell.NO_BORDER);
+        labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Paragraph(value, valueFont));
+        valueCell.setBorder(PdfPCell.NO_BORDER);
+        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(valueCell);
+    }
+
+    private void addTableHeader(PdfPTable table, String headerTitle, Font font, BaseColor backgroundColor) {
+        PdfPCell header = new PdfPCell();
+        header.setBackgroundColor(backgroundColor);
+        header.setBorderWidth(1);
+        header.setPadding(8);
+        header.setPhrase(new Paragraph(headerTitle, font));
+        table.addCell(header);
+    }
+
+    private void addTableRow(PdfPTable table, String desc, String qty, String rate, String total, Font font) {
+        PdfPCell cellDesc = new PdfPCell(new Paragraph(desc, font));
+        cellDesc.setPadding(6);
+        table.addCell(cellDesc);
+
+        PdfPCell cellQty = new PdfPCell(new Paragraph(qty, font));
+        cellQty.setPadding(6);
+        cellQty.setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.addCell(cellQty);
+
+        PdfPCell cellRate = new PdfPCell(new Paragraph(rate, font));
+        cellRate.setPadding(6);
+        cellRate.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(cellRate);
+
+        PdfPCell cellTotal = new PdfPCell(new Paragraph(total, font));
+        cellTotal.setPadding(6);
+        cellTotal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(cellTotal);
+    }
+
+    private void addTotalRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
+        PdfPCell labelCell = new PdfPCell(new Paragraph(label, labelFont));
+        labelCell.setBorder(PdfPCell.NO_BORDER);
+        labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        labelCell.setPaddingRight(10);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Paragraph(value, valueFont));
+        valueCell.setBorder(PdfPCell.BOTTOM);
+        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        table.addCell(valueCell);
+    }
+
+    private String formatCurrency(double amount) {
+        return String.format("Rs %.2f", amount);
     }
 }

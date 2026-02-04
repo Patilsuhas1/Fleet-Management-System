@@ -57,6 +57,11 @@ const ApiService = {
     findCustomer: (email) => instance.get(`/find?email=${encodeURIComponent(email)}`).then(res => res.data),
     saveCustomer: (customer) => instance.post('/customer/save-or-update', customer).then(res => res.data),
 
+    // Invoice
+    downloadInvoice: (bookingId) => instance.get(`/api/v1/invoice/${bookingId}`, {
+        responseType: 'blob'
+    }),
+
     // Vendors
     getAllVendors: () => instance.get('/api/v1/vendors').then(res => res.data),
     addVendor: (vendor) => instance.post('/api/v1/vendors', vendor).then(res => res.data),

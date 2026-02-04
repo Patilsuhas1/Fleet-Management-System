@@ -139,8 +139,8 @@ const AdminDashboard = () => {
                 {/* Notifications */}
                 {message.text && (
                     <div className={`mb-8 p-4 rounded-2xl border flex items-center gap-4 animate-in slide-in-from-right-4 duration-500 shadow-lg ${message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' :
-                            message.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' :
-                                'bg-destructive/10 border-destructive/20 text-destructive'
+                        message.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' :
+                            'bg-destructive/10 border-destructive/20 text-destructive'
                         }`}>
                         {message.type === 'success' ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
                         <div className="flex-grow">

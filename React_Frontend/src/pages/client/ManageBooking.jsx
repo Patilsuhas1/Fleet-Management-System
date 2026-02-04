@@ -100,10 +100,29 @@ const ManageBooking = () => {
         }
     };
 
+    const handleDownloadInvoice = async () => {
+        try {
+            setLoading(true);
+            const response = await ApiService.downloadInvoice(booking.bookingId);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Invoice_${booking.bookingId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (err) {
+            console.error('Invoice download failed:', err);
+            alert("Could not download invoice. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
-            <p className="text-muted-foreground animate-pulse">Syncing reservation details...</p>
+            <p className="text-muted-foreground animate-pulse">Processing request...</p>
         </div>
     );
 
@@ -116,7 +135,7 @@ const ManageBooking = () => {
                             <Search className="h-10 w-10 text-primary" />
                         </div>
                         <CardTitle className="text-3xl font-black">Manage <span className="text-primary">Trip</span></CardTitle>
-                        <CardDescription>Enter your reference number to view status or print invoice.</CardDescription>
+                        <CardDescription>Enter your reference number to view status or download invoice.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
                         {error && (
@@ -279,11 +298,11 @@ const ManageBooking = () => {
                                 </Button>
                                 <Button
                                     className="h-16 rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25 font-bold text-lg"
-                                    onClick={() => window.print()}
+                                    onClick={handleDownloadInvoice}
                                     disabled={isCancelled}
                                 >
                                     <Printer className="mr-2 h-5 w-5" />
-                                    Generate Invoice
+                                    Download Invoice
                                 </Button>
                             </div>
                         </CardContent>
